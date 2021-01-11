@@ -1,0 +1,29 @@
+<!--
+If you are reporting a new issue, please check to see if it's already been reported 
+by searching the issue list for this repository first, to avoid duplicates. If there 
+is a duplicate, please close your issue and add a comment to the existing issue instead.
+
+If you suspect your issue is a bug, please edit your issue description to
+include the BUG REPORT INFORMATION shown below. If you don't provide this and we 
+cannot debug your issue, we will close it. We will, however, reopen it if you 
+later provide the information.
+
+If you have an issue that can be shown visually, please provide a screenshot or
+gif of the problem as well.
+
+---------------------------------------------------
+BUG REPORT INFORMATION
+---------------------------------------------------
+Use the commands below to provide key information from your environment:
+You do NOT have to include this information if this is a FEATURE REQUEST
+-->
+
+**- Do you want to request a *feature* or report a *bug*?**
+
+**- What is happening?**
+
+**- If you think it's a bug, please provide complete repro steps.**
+
+**- What did you expect to happen?**
+
+**- Go version? OS version? or anything else you think might be helpful.**
