@@ -1,0 +1,26 @@
+name: Dependency License Scanning
+
+on:
+  push:
+    branches:
+      - master
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  fossa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Fossa init
+        run: |-
+          curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
+          fossa init --project github.com/${GITHUB_REPOSITORY}
+          cat .fossa.yml
+      - name: Upload dependencies
+        run: fossa analyze --verbose go:.
+        env:
+          FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
