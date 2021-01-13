@@ -28,6 +28,9 @@ type Storage interface {
 	// List returns a list of all keys in the namespace.
 	List(namespace string) ([][]byte, error)
 
+	// ListAll returns a mapped list of all keys in the store.
+	ListAll() (map[string][][]byte, error)
+
 	// Delete removes a key from the store.
 	Delete(name string, key []byte) error
 

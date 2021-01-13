@@ -2,7 +2,6 @@ package lookup
 
 import (
 	"errors"
-	"fmt"
 	"unsafe"
 
 	"github.com/jrapoport/chestnut/encoding/json/encoders"
@@ -31,19 +30,23 @@ type Encoder struct {
 func NewLookupEncoder(ctx *Context, typ reflect2.Type, encoder jsoniter.ValEncoder) jsoniter.ValEncoder {
 	logger := log.Log
 	if encoder == nil {
-		logger.Fatal(errors.New("value encoder required"))
+		logger.Panic(errors.New("value encoder required"))
+		return nil
+	}
+	if typ == nil {
+		logger.Panic(errors.New("encoder type required"))
 		return nil
 	}
 	if ctx == nil {
-		logger.Fatal(errors.New("lookup context required"))
+		logger.Panic(errors.New("lookup context required"))
 		return nil
 	}
 	if ctx.Token == InvalidToken {
-		logger.Fatal(errors.New("lookup token required"))
+		logger.Panic(errors.New("lookup token required"))
 		return nil
 	}
 	if ctx.Stream == nil {
-		logger.Fatal(errors.New("lookup stream required"))
+		logger.Panic(errors.New("lookup stream required"))
 		return nil
 	}
 	return &Encoder{
@@ -76,8 +79,6 @@ func (e *Encoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 			e.log.Debugf("use sub-encoder type %s", e.valType)
 			// use the clean encoder to encode to our own stream.
 			subEncoder.Encode(ptr, stream)
-		} else {
-			e.log.Error(fmt.Errorf("sub-encoder for type %s not found", e.valType))
 		}
 		return
 	}

@@ -22,6 +22,7 @@ var (
 	zstd      = []byte("KLUv/QQAAQEAeyJ0ZXN0X29iamVjdCI6eyJjbmMxZmY3NzU1IjowfX1hE1Nm")
 	emptyZstd = []byte("KLUv/QQACQAAII1jaLY=")
 	badVer    = "999.999.999"
+	badVer2    = ".*"
 	badFormat = Format("invalid")
 	badData   = []byte("==")
 	badZstd   = []byte("bm9wZQ")
@@ -50,14 +51,20 @@ var tests = []TestCase{
 		assert.Error, assert.Error},
 	{badVer, "", empty, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
+	{badVer2, "", empty, empty, noComp, nil, nil,
+		assert.Error, assert.Error},
 	{ver, "", empty, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
 	{ver, badFormat, empty, empty, noComp, nil, nil,
+		assert.Error, assert.Error},
+	{ver, badFormat, id, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
 	{ver, Secure, id, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
 	{ver, Sparse, empty, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
+			{ver, Sparse, id, empty, noComp, nil, nil,
+				assert.Error, assert.Error},
 	// valid packages
 	{ver, Secure, id, empty, noComp, sec, nil,
 		assert.NoError, assert.NoError},

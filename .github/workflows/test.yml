@@ -1,7 +1,5 @@
 on:
   push:
-    branches: [master]
-    tags: ['*']
   pull_request:
     types: [opened, synchronize, reopened]
 name: test
@@ -21,7 +19,6 @@ jobs:
       - name: Install dependencies
         run: make deps
       - name: Lint and test
-        run: make all
-#        TEST_FLAGS="-covermode=atomic -coverpkg=./... -coverprofile=coverage.txt"
-#      - name: Upload coverage to Codecov
-#        uses: codecov/codecov-action@v1
+        run: make all TEST_FLAGS="-covermode=atomic -coverpkg=./... -coverprofile=coverage.txt"
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1

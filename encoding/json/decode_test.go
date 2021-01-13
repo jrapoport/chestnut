@@ -36,4 +36,8 @@ func TestSecureUnmarshal_Error(t *testing.T) {
 	assert.Error(t, err)
 	err = SecureUnmarshal([]byte("bad encoding"), secureObj, decrypt)
 	assert.Error(t, err)
+	var p chan bool
+	err = SecureUnmarshal(familyEnc, &p, decrypt)
+	assert.Error(t, err)
 }
+

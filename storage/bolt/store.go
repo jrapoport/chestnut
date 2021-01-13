@@ -1,50 +1,59 @@
-package nuts
+package bolt
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/jrapoport/chestnut/log"
 	"github.com/jrapoport/chestnut/storage"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/xujiajun/nutsdb"
+	bolt "go.etcd.io/bbolt"
 )
 
-const logName = "nutsdb"
+const (
+	logName   = "bolt"
+	storeName = "chest.db"
+)
 
-// nutsDBStore is an implementation the Storage interface for nutsdb
-// https://github.com/xujiajun/nutsdb.
-type nutsDBStore struct {
+// boltStore is an implementation the Storage interface for bbolt
+// https://github.com/etcd-io/bbolt.
+type boltStore struct {
 	opts storage.StoreOptions
 	path string
-	db   *nutsdb.DB
+	db   *bolt.DB
 	log  log.Logger
 }
 
-var _ storage.Storage = (*nutsDBStore)(nil)
+var _ storage.Storage = (*boltStore)(nil)
 
-// NewStore is used to instantiate a datastore backed by nutsdb.
+// NewStore is used to instantiate a datastore backed by bbolt.
 func NewStore(path string, opt ...storage.StoreOption) storage.Storage {
 	opts := storage.ApplyOptions(storage.DefaultStoreOptions, opt...)
 	logger := log.Named(opts.Logger(), logName)
 	if path == "" {
 		logger.Fatal("store path required")
 	}
-	return &nutsDBStore{path: path, opts: opts, log: logger}
+	return &boltStore{path: path, opts: opts, log: logger}
 }
 
 // Options returns the configuration options for the store.
-func (s *nutsDBStore) Options() storage.StoreOptions {
+func (s *boltStore) Options() storage.StoreOptions {
 	return s.opts
 }
 
 // Open opens the store.
-func (s *nutsDBStore) Open() (err error) {
+func (s *boltStore) Open() (err error) {
 	s.log.Debugf("opening store at path: %s", s.path)
-	opt := nutsdb.DefaultOptions
-	opt.Dir = s.path
-	if s.db, err = nutsdb.Open(opt); err != nil {
+	var path string
+	path, err = ensureDBPath(s.path)
+	if err != nil {
+		err = s.logError("open", err)
+		return
+	}
+	s.db, err = bolt.Open(path, 0600, nil)
+	if err != nil {
 		err = s.logError("open", err)
 		return
 	}
@@ -58,7 +67,7 @@ func (s *nutsDBStore) Open() (err error) {
 }
 
 // Put an entry in the store.
-func (s *nutsDBStore) Put(name string, key []byte, value []byte) error {
+func (s *boltStore) Put(name string, key []byte, value []byte) error {
 	s.log.Debugf("put: %d value bytes to key: %s", len(value), key)
 	if err := storage.ValidKey(name, key); err != nil {
 		return s.logError("put", err)
@@ -66,28 +75,36 @@ func (s *nutsDBStore) Put(name string, key []byte, value []byte) error {
 		err = errors.New("value cannot be empty")
 		return s.logError("put", err)
 	}
-	putValue := func(tx *nutsdb.Tx) error {
+	putValue := func(tx *bolt.Tx) error {
 		s.log.Debugf("put: tx %d bytes to key: %s.%s",
 			len(value), name, string(key))
-		return tx.Put(name, key, value, 0)
+		b, err := tx.CreateBucketIfNotExists([]byte(name))
+		if err != nil {
+			return err
+		}
+		return b.Put(key, value)
 	}
 	return s.logError("put", s.db.Update(putValue))
 }
 
 // Get a value from the store.
-func (s *nutsDBStore) Get(name string, key []byte) ([]byte, error) {
+func (s *boltStore) Get(name string, key []byte) ([]byte, error) {
 	s.log.Debugf("get: value at key: %s", key)
 	if err := storage.ValidKey(name, key); err != nil {
 		return nil, s.logError("get", err)
 	}
 	var value []byte
-	getValue := func(tx *nutsdb.Tx) error {
+	getValue := func(tx *bolt.Tx) error {
 		s.log.Debugf("get: tx key: %s.%s", name, key)
-		e, err := tx.Get(name, key)
-		if err != nil {
-			return err
+		b := tx.Bucket([]byte(name))
+		if b == nil {
+			return fmt.Errorf("bucket not found: %s", name)
 		}
-		value = e.Value
+		v := b.Get(key)
+		if len(v) <= 0 {
+			return errors.New("nil value")
+		}
+		value = v
 		s.log.Debugf("get: tx key: %s.%s value (%d bytes)",
 			name, string(key), len(value))
 		return nil
@@ -99,7 +116,7 @@ func (s *nutsDBStore) Get(name string, key []byte) ([]byte, error) {
 }
 
 // Save the value in v and store the result at key.
-func (s *nutsDBStore) Save(name string, key []byte, v interface{}) error {
+func (s *boltStore) Save(name string, key []byte, v interface{}) error {
 	b, err := jsoniter.Marshal(v)
 	if err != nil {
 		return s.logError("save", err)
@@ -108,7 +125,7 @@ func (s *nutsDBStore) Save(name string, key []byte, v interface{}) error {
 }
 
 // Load the value at key and stores the result in v.
-func (s *nutsDBStore) Load(name string, key []byte, v interface{}) error {
+func (s *boltStore) Load(name string, key []byte, v interface{}) error {
 	b, err := s.Get(name, key)
 	if err != nil {
 		return s.logError("load", err)
@@ -117,25 +134,23 @@ func (s *nutsDBStore) Load(name string, key []byte, v interface{}) error {
 }
 
 // Has checks for a key in the store.
-func (s *nutsDBStore) Has(name string, key []byte) (bool, error) {
+func (s *boltStore) Has(name string, key []byte) (bool, error) {
 	s.log.Debugf("has: key: %s", key)
 	if err := storage.ValidKey(name, key); err != nil {
 		return false, s.logError("has", err)
 	}
 	var has bool
-	hasKey := func(tx *nutsdb.Tx) error {
+	hasKey := func(tx *bolt.Tx) error {
 		s.log.Debugf("has: tx get namespace: %s", name)
-		entries, err := tx.GetAll(name)
-		if err != nil {
+		b := tx.Bucket([]byte(name))
+		if b == nil {
+			err := fmt.Errorf("bucket not found: %s", name)
 			return err
 		}
-		s.log.Debugf("has: tx found %d keys in: %s", len(entries), name)
-		for _, entry := range entries {
-			has = bytes.Equal(key, entry.Key)
-			if has {
-				s.log.Debugf("has: tx key found: %s.%s", name, string(key))
-				break
-			}
+		v := b.Get(key)
+		has = len(v) > 0
+		if has {
+			s.log.Debugf("has: tx key found: %s.%s", name, string(key))
 		}
 		return nil
 	}
@@ -147,23 +162,35 @@ func (s *nutsDBStore) Has(name string, key []byte) (bool, error) {
 }
 
 // Delete removes a key from the store.
-func (s *nutsDBStore) Delete(name string, key []byte) error {
+func (s *boltStore) Delete(name string, key []byte) error {
 	s.log.Debugf("delete: key: %s", key)
 	if err := storage.ValidKey(name, key); err != nil {
 		return s.logError("delete", err)
 	}
-	del := func(tx *nutsdb.Tx) error {
+	del := func(tx *bolt.Tx) error {
 		s.log.Debugf("delete: tx key: %s.%s", name, string(key))
-		return tx.Delete(name, key)
+		b := tx.Bucket([]byte(name))
+		if b == nil {
+			err := fmt.Errorf("bucket not found: %s", name)
+			// an error just means we couldn't find the bucket
+			s.log.Warn(err)
+			return nil
+		}
+		return b.Delete(key)
 	}
 	return s.logError("delete", s.db.Update(del))
 }
 
 // List returns a list of all keys in the namespace.
-func (s *nutsDBStore) List(name string) (keys [][]byte, err error) {
+func (s *boltStore) List(name string) (keys [][]byte, err error) {
 	s.log.Debugf("list: keys in namespace: %s", name)
-	listKeys := func(tx *nutsdb.Tx) error {
-		keys, err = s.listKeys(name, tx)
+	listKeys := func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(name))
+		if b == nil {
+			err = fmt.Errorf("bucket not found: %s", name)
+			return err
+		}
+		keys, err = s.listKeys(name, b)
 		return err
 	}
 	if err = s.db.View(listKeys); err != nil {
@@ -173,40 +200,45 @@ func (s *nutsDBStore) List(name string) (keys [][]byte, err error) {
 	return
 }
 
-func (s *nutsDBStore) listKeys(name string, tx *nutsdb.Tx) ([][]byte, error) {
-	var keys [][]byte
-	s.log.Debugf("list: tx scan namespace: %s", name)
-	entries, err := tx.GetAll(name)
-	if err != nil {
+func (s *boltStore) listKeys(name string, b *bolt.Bucket) ([][]byte, error) {
+	if b == nil {
+		err := fmt.Errorf("invalid bucket: %s", name)
 		return nil, err
 	}
-	keys = make([][]byte, len(entries))
-	s.log.Debugf("list: tx found %d keys in: %s", len(entries), name)
-	for i, entry := range entries {
-		s.log.Debugf("list: tx found key: %s.%s", name, string(entry.Key))
-		keys[i] = entry.Key
-	}
+	var keys [][]byte
+	s.log.Debugf("list: tx scan namespace: %s", name)
+	count := b.Stats().KeyN
+	keys = make([][]byte, count)
+	s.log.Debugf("list: tx found %d keys in: %s", count, name)
+	var i int
+	_ = b.ForEach(func(k, _ []byte) error {
+		s.log.Debugf("list: tx found key: %s.%s", name, string(k))
+		keys[i] = k
+		i++
+		return nil
+	})
 	return keys, nil
 }
 
 // ListAll returns a mapped list of all keys in the store.
-func (s *nutsDBStore) ListAll() (map[string][][]byte, error) {
+func (s *boltStore) ListAll() (map[string][][]byte, error) {
 	s.log.Debugf("list: all keys")
 	var total int
 	allKeys := map[string][][]byte{}
-	listKeys := func(tx *nutsdb.Tx) error {
-		for name := range s.db.BPTreeIdx {
-			keys, err := s.listKeys(name, tx)
+	listKeys := func(tx *bolt.Tx) error {
+		err := tx.ForEach(func(name []byte, b *bolt.Bucket) error {
+			keys, err := s.listKeys(string(name), b)
 			if err != nil {
 				return err
 			}
 			if len(keys) <= 0 {
-				continue
+				return nil
 			}
-			allKeys[name] = keys
+			allKeys[string(name)] = keys
 			total += len(keys)
-		}
-		return nil
+			return nil
+		})
+		return err
 	}
 	if err := s.db.View(listKeys); err != nil {
 		return nil, s.logError("list", err)
@@ -216,7 +248,7 @@ func (s *nutsDBStore) ListAll() (map[string][][]byte, error) {
 }
 
 // Export copies the datastore to directory at path.
-func (s *nutsDBStore) Export(path string) error {
+func (s *boltStore) Export(path string) error {
 	s.log.Debugf("export: to path: %s", path)
 	if path == "" {
 		err := fmt.Errorf("invalid path: %s", path)
@@ -225,7 +257,15 @@ func (s *nutsDBStore) Export(path string) error {
 		err := fmt.Errorf("path cannot be store path: %s", path)
 		return s.logError("export", err)
 	}
-	if err := s.db.Backup(path); err != nil {
+	var err error
+	path, err = ensureDBPath(path)
+	if err != nil {
+		return s.logError("export", err)
+	}
+	err = s.db.View(func(tx *bolt.Tx) error {
+		return tx.CopyFile(path, 0600)
+	})
+	if err != nil {
 		return s.logError("export", err)
 	}
 	s.log.Debugf("export: to path complete: %s", path)
@@ -233,7 +273,7 @@ func (s *nutsDBStore) Export(path string) error {
 }
 
 // Close closes the datastore and releases all db resources.
-func (s *nutsDBStore) Close() error {
+func (s *boltStore) Close() error {
 	s.log.Debugf("closing store at path: %s", s.path)
 	err := s.db.Close()
 	s.db = nil
@@ -241,7 +281,7 @@ func (s *nutsDBStore) Close() error {
 	return s.logError("close", err)
 }
 
-func (s *nutsDBStore) logError(name string, err error) error {
+func (s *boltStore) logError(name string, err error) error {
 	if err == nil {
 		return nil
 	}
@@ -250,4 +290,33 @@ func (s *nutsDBStore) logError(name string, err error) error {
 	}
 	s.log.Error(err)
 	return err
+}
+
+func ensureDBPath(path string) (string, error) {
+	if path == "" {
+		return "", errors.New("path not found")
+	}
+	// does the path exist?
+	_, err := os.Stat(path)
+	exists := !os.IsNotExist(err)
+	if err != nil && exists {
+		return "", err
+	}
+	if !exists {
+		// make sure the directory path exists
+		if err = os.MkdirAll(path, 0700); err != nil {
+			return "", err
+		}
+	}
+	// is the path a directory?
+	d, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
+	if !d.Mode().IsDir() {
+		return path, nil
+	}
+	// if we have a directory, then append our default name
+	path = filepath.Join(path, storeName)
+	return path, nil
 }

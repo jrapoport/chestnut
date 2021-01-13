@@ -27,11 +27,8 @@ func PrivKeyToRSAPrivateKey(privKey crypto.PrivKey) *rsa.PrivateKey {
 // RSAPrivateKeyToPrivKey converts standard library rsa
 // private keys to libp2p/go-libp2p-core/crypto private keys.
 func RSAPrivateKeyToPrivKey(privateKey *rsa.PrivateKey) crypto.PrivKey {
-	pk, _, err := crypto.KeyPairFromStdKey(privateKey)
-	if err != nil {
-		log.Panic(err)
-		return nil
-	}
+	// because we are strongly typing the interface it will never fail
+	pk, _, _ := crypto.KeyPairFromStdKey(privateKey)
 	return pk
 }
 
@@ -52,11 +49,8 @@ func PrivKeyToECDSAPrivateKey(privKey crypto.PrivKey) *ecdsa.PrivateKey {
 // ECDSAPrivateKeyToPrivKey converts standard library ecdsa
 // private keys to libp2p/go-libp2p-core/crypto private keys.
 func ECDSAPrivateKeyToPrivKey(privateKey *ecdsa.PrivateKey) crypto.PrivKey {
-	pk, _, err := crypto.KeyPairFromStdKey(privateKey)
-	if err != nil {
-		log.Panic(err)
-		return nil
-	}
+	// because we are strongly typing the interface it will never fail
+	pk, _, _ := crypto.KeyPairFromStdKey(privateKey)
 	return pk
 }
 
@@ -77,11 +71,8 @@ func PrivKeyToEd25519PrivateKey(privKey crypto.PrivKey) *ed25519.PrivateKey {
 // Ed25519PrivateKeyToPrivKey converts ed25519 private keys
 // to libp2p/go-libp2p-core/crypto private keys.
 func Ed25519PrivateKeyToPrivKey(privateKey *ed25519.PrivateKey) crypto.PrivKey {
-	pk, _, err := crypto.KeyPairFromStdKey(privateKey)
-	if err != nil {
-		log.Panic(err)
-		return nil
-	}
+	// because we are strongly typing the interface it will never fail
+	pk, _, _ := crypto.KeyPairFromStdKey(privateKey)
 	return pk
 }
 
@@ -104,10 +95,7 @@ func PrivKeyToBTCECPrivateKey(privKey crypto.PrivKey) *btcec.PrivateKey {
 // private keys to libp2p/go-libp2p-core/crypto private keys. Internally
 // equivalent to (*crypto.Secp256k1PrivateKey)(privateKey).
 func BTCECPrivateKeyToPrivKey(privateKey *btcec.PrivateKey) crypto.PrivKey {
-	pk, _, err := crypto.KeyPairFromStdKey(privateKey)
-	if err != nil {
-		log.Panic(err)
-		return nil
-	}
+	// because we are strongly typing the interface it will never fail
+	pk, _, _ := crypto.KeyPairFromStdKey(privateKey)
 	return pk
 }

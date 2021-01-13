@@ -73,7 +73,7 @@ func NewSecureEncoderExtension(encoderID string, efn EncryptionFunction, opt ...
 	ext.encoder = encoder
 	ext.lookupCtx = &lookup.Context{Token: token}
 	if encoder == nil {
-		ext.log.Fatal(errors.New("encoder not found"))
+		ext.log.Panic(errors.New("encoder not found"))
 	}
 	if efn == nil {
 		ext.log.Panic(errors.New("encryption required"))
@@ -269,6 +269,9 @@ func (ext *EncoderExtension) openLookupStream() error {
 }
 
 func (ext *EncoderExtension) setupLookupContext(stream *jsoniter.Stream) {
+	if ext.lookupCtx == nil {
+		return
+	}
 	ext.log.Debugf("setup lookup context: %s", ext.lookupCtx.Token)
 	// reset the lookup index to 0
 	stream.Attachment = 0

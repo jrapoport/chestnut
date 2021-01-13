@@ -3,11 +3,14 @@ package packager
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
+	"github.com/jrapoport/chestnut/encoding/json/encoders"
 )
 
 // EncodePackage returns a valid binary enc package for storage.
 func EncodePackage(encoderID, token string, cipher, encoded []byte, compressed bool) ([]byte, error) {
-	if encoderID == "" {
+	if encoderID == encoders.InvalidID {
+		return nil, errors.New("invalid encoder id")
 	}
 	format := Secure
 	// are we sparse?

@@ -1,6 +1,6 @@
 # 🌰 &nbsp;Chestnut
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jrapoport/chestnut/test?style=flat-square) [![Go Report Card](https://goreportcard.com/badge/github.com/jrapoport/chestnut?style=flat-square&)](https://goreportcard.com/report/github.com/jrapoport/chestnut) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/jrapoport/chestnut?style=flat-square) [![GitHub](https://img.shields.io/github/license/jrapoport/chestnut?style=flat-square)](https://github.com/jrapoport/chestnut/blob/master/LICENSE)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jrapoport/chestnut/test?style=flat-square) [![Go Report Card](https://goreportcard.com/badge/github.com/jrapoport/chestnut?style=flat-square&)](https://goreportcard.com/report/github.com/jrapoport/chestnut) ![Codecov branch](https://img.shields.io/codecov/c/github/jrapoport/chestnut/master?style=flat-square&token=7REY4BDPHW) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/jrapoport/chestnut?style=flat-square) [![GitHub](https://img.shields.io/github/license/jrapoport/chestnut?style=flat-square)](https://github.com/jrapoport/chestnut/blob/master/LICENSE)
 
 [![Buy Me A Coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-☕-6F4E37?style=flat-square)](https://www.buymeacoffee.com/jrapoport)
 
@@ -13,17 +13,19 @@ about things like storage, compression, hashing, secrets, or encryption.
 Chestnut is a storage chest, and not a datastore itself. As such, Chestnut must 
 be backed by a storage solution. 
 
-Currently, Chestnut supports [NutsDB](https://github.com/xujiajun/nutsdb) for 
-storage with [BBolt](https://github.com/etcd-io/bbolt) support coming soon(ish).
+Currently, Chestnut supports [BBolt](https://github.com/etcd-io/bbolt) and
+[NutsDB](https://github.com/xujiajun/nutsdb) as backing storage.
 
 ## Table of Contents
 - [Getting Started](#getting-started)
     * [Installing](#installing)
     * [Importing Chestnut](#importing-chestnut)
-        + [Requirments](#requirments)
+        + [Requirements](#requirements)
 - [Storage](#storage)
-    * [Current Support](#current-support)
-    * [Planned Support](#planned-support)
+    * [Built-in](#supported)
+        + [BBolt](#bbolt)
+        + [NutsDB](#nutsdb)
+    * [Planned](#planned)
 - [Encryption](#encryption)
     * [AES256-CTR](#aes256-ctr)
     * [Custom Encryption](#custom-encryption)
@@ -94,8 +96,6 @@ $ go get -u github.com/jrapoport/chestnut
 To use Chestnut as an encrypted store, import as:
 
 ```go
-package main
-
 import (
   "github.com/jrapoport/chestnut"
   "github.com/jrapoport/chestnut/encryptor/aes"
@@ -118,7 +118,7 @@ defer cn.Close()
 
 ```
 
-#### Requirments
+#### Requirements
 Chestnut has two requirements:
 1) [Storage](#storage) that supports the `storage.Storage` interface 
    (with a lightweight adapter).
@@ -126,23 +126,59 @@ Chestnut has two requirements:
 
 ## Storage
 Chestnut will work seamlessly with **any** storage solution (or adapter) that 
-supports the`storage.Storage` interface. We picked [NutsDB](https://github.com/xujiajun/nutsdb) 
-to start, and plan to add [BBolt](https://github.com/etcd-io/bbolt) support soon.
+supports the`storage.Storage` interface.
 
-### Current Support
+### Built-in
 
-* [NutsDB](https://github.com/xujiajun/nutsdb)
+Currently, Chestnut has built-in support for
+[BBolt](https://github.com/etcd-io/bbolt) and 
+[NutsDB](https://github.com/xujiajun/nutsdb).
 
-### Planned Support
+#### BBolt
 
-* [BBolt](https://github.com/etcd-io/bbolt) — soon(ish).
+https://github.com/etcd-io/bbolt
+Chestnut has built-in support for using
+[BBolt](https://github.com/etcd-io/bbolt) as a backing store.
 
-* [GORM](https://github.com/go-gorm/gorm) — no timeframe.
-  
-Gorm is an ORM, and while not a datastore per se, we think it could be adapted 
-to support sparse encryption. The upside of Gorm is automatic support for 
-databases like mysql, sqlite, etc. The downside is supporting Gorm is likely a 
-lot of work.
+To use bbolt for a backing store you can import Chestnut's `bolt` package
+and call `bolt.NewStore()`:
+
+```go
+import "github.com/jrapoport/chestnut/storage/bolt"
+
+//use or create a bbolt backing store at path
+store := bolt.NewStore(path)
+
+// use bbolt for the storage chest
+cn := chestnut.NewChestnut(store, ...)
+```
+ 
+#### NutsDB
+
+https://github.com/xujiajun/nutsdb  
+Chestnut has built-in support for using 
+[NutsDB](https://github.com/xujiajun/nutsdb) as a backing store.  
+
+To use nutsDB for a backing store you can import Chestnut's `nuts` package
+and call `nuts.NewStore()`:
+
+```go
+import "github.com/jrapoport/chestnut/storage/nuts"
+
+//use or create a nutsdb backing store at path
+store := nuts.NewStore(path)
+
+// use nutsdb for the storage chest
+cn := chestnut.NewChestnut(store, ...)
+```
+
+### Planned
+
+[GORM](https://github.com/go-gorm/gorm)  
+  Gorm is an ORM, and while not a datastore per se, we think it could be adapted 
+  to support sparse encryption. The upside of Gorm is automatic support for 
+  databases like mysql, sqlite, etc. The downside is supporting Gorm is likely a 
+  lot of work, so no timeframe.
 
 ## Encryption
 Chestnut supports several flavors of AES out of the box:
@@ -602,6 +638,15 @@ To get a list of all the keys for a namespace you can call `Chestnut.List()`:
 keys, err := cn.List("my-namespace")
 ```
 
+#### ListAll
+
+To get a mapped list of all keys in the store organized by namespace you can call
+`Chestnut.ListAll()`:
+
+```go
+keymap, err := cn.ListAll()
+```
+
 #### Export
 
 To export the storage chest to another path you can call `Chestnut.Export()`:
@@ -652,7 +697,6 @@ type MySecureStruct struct {
     ValueA     int      `json:",secure"`           // *will* be encrypted
     ValueB     struct{} `json:"value_b,secure"`    // *will* be encrypted
     ValueC     string   `json:",omitempty,secure"` // *will* be encrypted
-    ...
     PlaintextA string                                // will *not* be encrypted
     PlaintextB int      `json:""`                  // will *not* be encrypted
     PlaintextC int      `json:"-"`                 // will *not* be encrypted
@@ -710,18 +754,18 @@ var myStruct = &MyStructD{
 `myStruct` will be encrypted by Chestnut as:
 
 ```go
-*main.MyStructD {
-  ValueD: '****'
+*MyStructD {
+  ValueD: ****
   Embed1: main.MyStructA{
-      ValueA: '****'
+      ValueA: ****
   },
   Embed2: main.MyStructB{
       MyStructA: main.MyStructA{
-      	ValueA: '****'
+      	ValueA: ****
       },
-      ValueB: "baz"
+      ValueB: ****
   },
-  Embed3: '****'
+  Embed3: ****
 }
 ```
 where `'****'` represents an encrypted value.

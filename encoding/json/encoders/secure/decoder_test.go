@@ -83,4 +83,10 @@ func TestSecureDecoderExtension(t *testing.T) {
 			decoderExt.Close()
 		})
 	}
+	d := NewSecureDecoderExtension(encoders.InvalidID, PassthroughDecryption)
+	assert.NotNil(t, d)
+	assert.Empty(t, d.encoderID )
+	assert.Panics(t, func() {
+		_ = NewSecureDecoderExtension(encoders.InvalidID, nil)
+	})
 }
