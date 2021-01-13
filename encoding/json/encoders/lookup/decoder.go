@@ -27,15 +27,23 @@ type Decoder struct {
 func NewLookupDecoder(ctx *Context, typ reflect2.Type, decoder jsoniter.ValDecoder) jsoniter.ValDecoder {
 	logger := log.Log
 	if decoder == nil {
-		logger.Fatal(errors.New("value encoder required"))
+		logger.Panic(errors.New("value encoder required"))
+		return nil
+	}
+	if typ == nil {
+		logger.Panic(errors.New("decoder typ required"))
 		return nil
 	}
 	if ctx == nil {
-		logger.Fatal(errors.New("lookup context required"))
+		logger.Panic(errors.New("lookup context required"))
+		return nil
+	}
+	if ctx.Token == "" {
+		logger.Panic(errors.New("lookup token required"))
 		return nil
 	}
 	if ctx.Stream == nil {
-		logger.Fatal(errors.New("lookup stream required"))
+		logger.Panic(errors.New("lookup stream required"))
 		return nil
 	}
 	return &Decoder{

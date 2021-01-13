@@ -21,6 +21,22 @@ const (
 	Zstd Format = "zstd"
 )
 
+func (f Format) Valid() bool {
+	switch f {
+	case None:
+		break
+	case Custom:
+		break
+	case Zstd:
+		break
+	default:
+		return false
+	}
+	return true
+}
+
+
+
 // CompressorFunc is the function the prototype for compression.
 type CompressorFunc func(data []byte) (compressed []byte, err error)
 

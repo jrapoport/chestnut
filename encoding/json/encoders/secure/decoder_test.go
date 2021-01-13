@@ -1,6 +1,7 @@
 package secure
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -83,4 +84,72 @@ func TestSecureDecoderExtension(t *testing.T) {
 			decoderExt.Close()
 		})
 	}
+	d := NewSecureDecoderExtension(encoders.InvalidID, PassthroughDecryption)
+	assert.NotNil(t, d)
+	assert.Empty(t, d.encoderID )
+	assert.Panics(t, func() {
+		_ = NewSecureDecoderExtension(encoders.InvalidID, nil)
+	})
+}
+
+func TestSecureDecoderExtension_BadUnseal(t *testing.T) {
+	var i int
+	badCompressor := func(data []byte) (compressed []byte, err error) {
+		if i % 2 != 0 && i < 10 {
+			i++
+			return nil, errors.New("compression error")
+		}
+		i++
+		return nil, err
+	}
+	bade := true
+	ext := NewSecureDecoderExtension(testEncoderID, func(plaintext []byte) (ciphertext []byte, err error) {
+		if bade {
+			return nil,  errors.New("encryption error")
+		}
+		return nil, err
+	},
+		WithCompressor(badCompressor))
+	err := ext.Open()
+	assert.NoError(t, err)
+	err = ext.Open()
+	assert.Error(t, err)
+	_, err = ext.Unseal(bothEncoded)
+	assert.Error(t, err)
+	ext.Close()
+	_, err = ext.Unseal(bothEncoded)
+	assert.Error(t, err)
+	_, err = ext.Unseal(bothSealed)
+	assert.Error(t, err)
+	bade = false
+	_, err = ext.Unseal(bothComp)
+	assert.Error(t, err)
+	i = 1
+	_, err = ext.Unseal(bothComp)
+	i = 0
+	ext.Close()
+	encoder := encoders.NewEncoder()
+	encoder.RegisterExtension(ext)
+	err = encoder.Unmarshal(allComp, &None{})
+	assert.Error(t, err)
+	err = ext.Open()
+	assert.NoError(t, err)
+	assert.Panics(t, func() {
+		ext.decryptFunc = nil
+		_, err = ext.Unseal(bothComp)
+		assert.Error(t, err)
+	})
+}
+
+func TestSecureDecoderExtension_BadOpen(t *testing.T) {
+	ext := NewSecureDecoderExtension(testEncoderID, PassthroughDecryption)
+	err := ext.Open()
+	assert.NoError(t, err)
+	err = ext.Open()
+	assert.Error(t, err)
+	ext.Close()
+	ext.lookupCtx = nil
+	err = ext.Open()
+	assert.Error(t, err)
+	ext.Close()
 }

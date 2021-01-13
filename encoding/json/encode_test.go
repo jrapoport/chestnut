@@ -17,7 +17,6 @@ func TestSecureMarshal(t *testing.T) {
 	assert.Equal(t, familyComp, bytes)
 }
 
-
 func TestSecureMarshal_Error(t *testing.T) {
 	assert.Panics(t, func() {
 		_, _ = SecureMarshal(family, nil)
@@ -26,6 +25,10 @@ func TestSecureMarshal_Error(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, bytes)
 	bytes, err = SecureMarshal(nil, encrypt)
+	assert.Error(t, err)
+	assert.Nil(t, bytes)
+	var p chan bool
+	bytes, err = SecureMarshal(p, encrypt)
 	assert.Error(t, err)
 	assert.Nil(t, bytes)
 }

@@ -1,6 +1,7 @@
 package aes
 
 import (
+	"math"
 	"testing"
 
 	"github.com/jrapoport/chestnut/encryptor/crypto"
@@ -65,6 +66,14 @@ func testCipher(t *testing.T, encryptCall, decryptCall CipherCall) {
 	}
 	for _, bd := range badData {
 		_, err = decryptCall(crypto.Key256, []byte(secret), bd)
+		assert.Error(t, err)
+	}
+	for _, bd := range badData {
+		_, err = decryptCall(0, nil, bd)
+		assert.Error(t, err)
+	}
+	for _, bd := range badData {
+		_, err = decryptCall(math.MaxInt64, nil, bd)
 		assert.Error(t, err)
 	}
 }

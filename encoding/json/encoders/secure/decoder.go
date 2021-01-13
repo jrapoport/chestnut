@@ -94,10 +94,6 @@ func (ext *DecoderExtension) Unseal(encoded []byte) ([]byte, error) {
 	if err != nil {
 		return nil, ext.logError(err)
 	}
-	if err = pkg.Valid(); err != nil {
-		err = fmt.Errorf("invalid encoding %w", err)
-		return nil, ext.logError(err)
-	}
 	compressed := pkg.Compressed
 	ext.log.Debugf("package data is compressed: %t", compressed)
 	// IF we have an encoder ID, check that it matches the package
@@ -267,6 +263,9 @@ func (ext *DecoderExtension) openLookupStream() error {
 }
 
 func (ext *DecoderExtension) setupLookupContext(stream *jsoniter.Stream) {
+	if ext.lookupCtx == nil {
+		return
+	}
 	ext.log.Debugf("setup lookup context: %s", ext.lookupCtx.Token)
 	stream.Attachment = ext.encoder.Get(ext.lookupBuffer)
 	ext.lookupCtx.Stream = stream

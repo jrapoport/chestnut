@@ -2,6 +2,8 @@ package lookup
 
 import (
 	"fmt"
+	"github.com/jrapoport/chestnut/log"
+	jsoniter "github.com/json-iterator/go"
 	"testing"
 
 	"github.com/jrapoport/chestnut/encoding/json/encoders"
@@ -86,4 +88,36 @@ func TestLookupEncoder_IsEmpty(t *testing.T) {
 		empty := le.IsEmpty(reflect2.PtrOf(test.value))
 		test.assertEmpty(t, empty, "value: %v", test.value)
 	}
+}
+
+func TestLookupEncoder_NewLookupEncoder(t *testing.T) {
+	encoder := encoders.NewEncoder()
+	typ := reflect2.TypeOf("a-string")
+	enc := encoder.EncoderOf(typ)
+	bad1 := &Context{}
+	bad2 := &Context{InvalidToken, newTestStream(t)}
+	bad3 := &Context{"a-string-value",nil}
+	good :=  &Context{"a-string-value", newTestStream(t)}
+	for _, ctx := range []*Context {nil, bad1, bad2, bad3, good} {
+		for _, tp := range []reflect2.Type{nil, typ} {
+			for _, ve := range []jsoniter.ValEncoder{nil, enc} {
+				if ctx == good && tp == typ && ve == enc {
+					continue
+				}
+				assert.Panics(t, func() {
+					_ = NewLookupEncoder(ctx, tp, ve)
+				}, ctx, tp, enc)
+			}
+		}
+	}
+}
+
+func TestLookupEncoder_Fallback(t *testing.T) {
+	strVal := "not-empty"
+	stream := newTestStream(t)
+	encoder := encoders.NewEncoder()
+	kty := reflect2.TypeOf("a-string")
+	enc := encoder.EncoderOf(kty)
+	le := &Encoder{stream: stream, valType: kty, encoder: enc, log: log.Log}
+	le.Encode(reflect2.PtrOf(strVal), stream)
 }

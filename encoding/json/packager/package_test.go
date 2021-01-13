@@ -1,6 +1,8 @@
 package packager
 
 import (
+	"bytes"
+	"encoding/gob"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +24,7 @@ var (
 	zstd      = []byte("KLUv/QQAAQEAeyJ0ZXN0X29iamVjdCI6eyJjbmMxZmY3NzU1IjowfX1hE1Nm")
 	emptyZstd = []byte("KLUv/QQACQAAII1jaLY=")
 	badVer    = "999.999.999"
+	badVer2    = ".*"
 	badFormat = Format("invalid")
 	badData   = []byte("==")
 	badZstd   = []byte("bm9wZQ")
@@ -50,14 +53,20 @@ var tests = []TestCase{
 		assert.Error, assert.Error},
 	{badVer, "", empty, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
+	{badVer2, "", empty, empty, noComp, nil, nil,
+		assert.Error, assert.Error},
 	{ver, "", empty, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
 	{ver, badFormat, empty, empty, noComp, nil, nil,
+		assert.Error, assert.Error},
+	{ver, badFormat, id, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
 	{ver, Secure, id, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
 	{ver, Sparse, empty, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
+			{ver, Sparse, id, empty, noComp, nil, nil,
+				assert.Error, assert.Error},
 	// valid packages
 	{ver, Secure, id, empty, noComp, sec, nil,
 		assert.NoError, assert.NoError},
@@ -172,8 +181,25 @@ func (ts *PackageTestSuite) TestPackage_Decode() {
 			Cipher:     test.sec,
 			Encoded:    test.enc,
 		}
-		bytes, err := encode(testPkg)
-		pkg, err := DecodePackage(bytes)
+		_, err := encode(testPkg)
+		test.unwrapErr(ts.T(), err)
+	}
+
+	for _, test := range tests {
+		testPkg := &Package{
+			Version:    test.ver,
+			Format:     test.fmt,
+			Compressed: test.comp,
+			EncoderID:  test.id,
+			Token:      test.token,
+			Cipher:     test.sec,
+			Encoded:    test.enc,
+		}
+		b := bytes.Buffer{}
+		e := gob.NewEncoder(&b)
+		err := e.Encode(testPkg)
+		assert.NoError(ts.T(), err)
+		pkg, err := DecodePackage(b.Bytes())
 		test.unwrapErr(ts.T(), err)
 		if err != nil {
 			assert.Nil(ts.T(), pkg)

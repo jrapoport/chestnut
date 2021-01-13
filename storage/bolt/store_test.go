@@ -1,4 +1,4 @@
-package nuts
+package bolt
 
 import (
 	"testing"

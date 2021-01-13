@@ -1,6 +1,7 @@
 package chestnut
 
 import (
+	"errors"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -14,6 +15,7 @@ import (
 	"github.com/jrapoport/chestnut/encryptor/crypto"
 	"github.com/jrapoport/chestnut/log"
 	"github.com/jrapoport/chestnut/storage"
+	"github.com/jrapoport/chestnut/storage/bolt"
 	"github.com/jrapoport/chestnut/storage/nuts"
 	"github.com/jrapoport/chestnut/value"
 	"github.com/stretchr/testify/assert"
@@ -188,24 +190,37 @@ func newKey() string {
 	return uuid.New().String()
 }
 
-func nutsDBStore(t *testing.T) storage.Storage {
-	path := t.TempDir()
+func nutsStore(t *testing.T, path string) storage.Storage {
 	store := nuts.NewStore(path)
 	assert.NotNil(t, store)
 	return store
 }
 
+func boltStore(t *testing.T, path string) storage.Storage {
+	store := bolt.NewStore(path)
+	assert.NotNil(t, store)
+	return store
+}
+
+type StoreFunc = func(t *testing.T, path string) storage.Storage
+
 type ChestnutTestSuite struct {
 	suite.Suite
-	cn *Chestnut
+	storeFunc StoreFunc
+	cn        *Chestnut
 }
 
 func TestChestnut(t *testing.T) {
-	suite.Run(t, new(ChestnutTestSuite))
+	testStores := []StoreFunc{nutsStore, boltStore}
+	for _, test := range testStores {
+		ts := new(ChestnutTestSuite)
+		ts.storeFunc = test
+		suite.Run(t, ts)
+	}
 }
 
 func (ts *ChestnutTestSuite) SetupTest() {
-	store := nutsDBStore(ts.T())
+	store := ts.storeFunc(ts.T(), ts.T().TempDir())
 	assert.NotNil(ts.T(), store)
 	ts.cn = NewChestnut(store, encryptorOpt)
 	assert.NotNil(ts.T(), ts.cn)
@@ -431,19 +446,19 @@ func (ts *ChestnutTestSuite) TestStore_SecureEntry() {
 	}
 }
 
-func TestChestnut_OverwritesDisabled(t *testing.T) {
-	testOptionDisableOverwrites(t, false)
+func (ts *ChestnutTestSuite) TestChestnut_OverwritesDisabled() {
+	ts.testOptionDisableOverwrites(false)
 }
 
-func TestChestnut_OverwritesEnabled(t *testing.T) {
-	testOptionDisableOverwrites(t, true)
+func (ts *ChestnutTestSuite) TestChestnut_OverwritesEnabled() {
+	ts.testOptionDisableOverwrites(true)
 }
 
-func testOptionDisableOverwrites(t *testing.T, enabled bool) {
+func (ts *ChestnutTestSuite) testOptionDisableOverwrites(enabled bool) {
 	key := newKey()
-	path := filepath.Join(t.TempDir())
-	store := nuts.NewStore(path)
-	assert.NotNil(t, store)
+	path := filepath.Join(ts.T().TempDir())
+	store := ts.storeFunc(ts.T(), path)
+	assert.NotNil(ts.T(), store)
 	opts := []ChestOption{
 		encryptorOpt,
 	}
@@ -453,26 +468,26 @@ func testOptionDisableOverwrites(t *testing.T, enabled bool) {
 		opts = append(opts, OverwritesForbidden())
 	}
 	cn := NewChestnut(store, opts...)
-	assert.NotNil(t, cn)
-	assert.Equal(t, enabled, cn.opts.overwrites)
+	assert.NotNil(ts.T(), cn)
+	assert.Equal(ts.T(), enabled, cn.opts.overwrites)
 	defer func() {
 		err := cn.Close()
-		assert.NoError(t, err)
+		assert.NoError(ts.T(), err)
 	}()
 	err := cn.Open()
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	err = cn.Put(testName, []byte(key), []byte(testValue))
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	// this should fail with an error if overwrites are disabled
 	err = cn.Put(testName, []byte(key), []byte(testValue))
-	assertErr(t, err)
+	assertErr(ts.T(), err)
 }
 
-func TestChestnut_ChainedEncryptor(t *testing.T) {
+func (ts *ChestnutTestSuite) TestChestnut_ChainedEncryptor() {
 	var operation = "encrypting"
 	// initialize a keystore with a chained encryptor
 	openSecret := func(s crypto.Secret) []byte {
-		t.Logf("%s with secret %s", operation, s.ID())
+		ts.T().Logf("%s with secret %s", operation, s.ID())
 		return []byte(s.ID())
 	}
 	managedSecret := crypto.NewManagedSecret(uuid.New().String(), "i-am-a-managed-secret")
@@ -483,101 +498,105 @@ func TestChestnut_ChainedEncryptor(t *testing.T) {
 		encryptor.NewAESEncryptor(crypto.Key192, aes.CTR, managedSecret),
 		encryptor.NewAESEncryptor(crypto.Key256, aes.GCM, secureSecret2),
 	)
-	path := t.TempDir()
-	store := nuts.NewStore(path)
-	assert.NotNil(t, store)
+	path := ts.T().TempDir()
+	store := ts.storeFunc(ts.T(), path)
+	assert.NotNil(ts.T(), store)
 	cn := NewChestnut(store, encryptorChainOpt)
-	assert.NotNil(t, cn)
+	assert.NotNil(ts.T(), cn)
 	defer func() {
 		err := cn.Close()
-		assert.NoError(t, err)
+		assert.NoError(ts.T(), err)
 	}()
 	err := cn.Open()
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	key := newKey()
 	err = cn.Put(testName, []byte(key), []byte(testValue))
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	operation = "decrypting"
 	v, err := cn.Get(testName, []byte(key))
-	assert.NotEmpty(t, v)
-	assert.NoError(t, err)
-	assert.Equal(t, []byte(testValue), v)
+	assert.NotEmpty(ts.T(), v)
+	assert.NoError(ts.T(), err)
+	assert.Equal(ts.T(), []byte(testValue), v)
 	err = cn.Delete(testName, []byte(key))
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	e := value.NewSecureValue(uuid.New().String(), []byte(testValue))
 	err = cn.Save(testName, []byte(key), e)
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	se1 := &value.Secure{}
 	err = cn.Sparse(testName, []byte(key), se1)
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	se2 := &value.Secure{}
 	err = cn.Load(testName, []byte(key), se2)
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 }
 
-func TestChestnut_Compression(t *testing.T) {
+func (ts *ChestnutTestSuite) TestChestnut_Compression() {
 	compOpt := WithCompression(compress.Zstd)
 	key := newKey()
-	path := filepath.Join(t.TempDir())
-	store := nuts.NewStore(path)
-	assert.NotNil(t, store)
+	path := filepath.Join(ts.T().TempDir())
+	store := ts.storeFunc(ts.T(), path)
+	assert.NotNil(ts.T(), store)
 	cn := NewChestnut(store, encryptorOpt, compOpt)
-	assert.NotNil(t, cn)
+	assert.NotNil(ts.T(), cn)
 	defer func() {
 		err := cn.Close()
-		assert.NoError(t, err)
+		assert.NoError(ts.T(), err)
 	}()
 	err := cn.Open()
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	err = cn.Put(testName, []byte(key), []byte(lorumIpsum))
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	val, err := cn.Get(testName, []byte(key))
-	assert.NoError(t, err)
-	assert.Equal(t, lorumIpsum, string(val))
+	assert.NoError(ts.T(), err)
+	assert.Equal(ts.T(), lorumIpsum, string(val))
 }
 
-func TestChestnut_Compressors(t *testing.T) {
+func (ts *ChestnutTestSuite) TestChestnut_Compressors() {
 	compOpt := WithCompressors(zstd.Compress, zstd.Decompress)
 	key := newKey()
-	path := filepath.Join(t.TempDir())
-	store := nuts.NewStore(path)
-	assert.NotNil(t, store)
+	path := filepath.Join(ts.T().TempDir())
+	store := ts.storeFunc(ts.T(), path)
+	assert.NotNil(ts.T(), store)
 	cn := NewChestnut(store, encryptorOpt, compOpt)
-	assert.NotNil(t, cn)
+	assert.NotNil(ts.T(), cn)
 	defer func() {
 		err := cn.Close()
-		assert.NoError(t, err)
+		assert.NoError(ts.T(), err)
 	}()
 	err := cn.Open()
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	err = cn.Put(testName, []byte(key), []byte(lorumIpsum))
-	assert.NoError(t, err)
+	assert.NoError(ts.T(), err)
 	val, err := cn.Get(testName, []byte(key))
-	assert.NoError(t, err)
-	assert.Equal(t, lorumIpsum, string(val))
+	assert.NoError(ts.T(), err)
+	assert.Equal(ts.T(), lorumIpsum, string(val))
 }
 
-func TestChestnut_OpenErr(t *testing.T) {
+func (ts *ChestnutTestSuite) TestChestnut_OpenErr() {
 	cn := &Chestnut{}
 	err := cn.Open()
-	assert.Error(t, err)
+	assert.Error(ts.T(), err)
 }
 
-func TestChestnut_SetLogger(t *testing.T) {
-	path := t.TempDir()
-	store := nuts.NewStore(path)
-	assert.NotNil(t, store)
+func (ts *ChestnutTestSuite) TestChestnut_SetLogger() {
+	path := ts.T().TempDir()
+	store := ts.storeFunc(ts.T(), path)
+	assert.NotNil(ts.T(), store)
 	cn := NewChestnut(store, encryptorOpt)
-	cn.SetLogger(log.NewZapLoggerWithLevel(log.DebugLevel))
-	defer func() {
-		err := cn.Close()
-		assert.NoError(t, err)
-	}()
-	err := cn.Open()
-	assert.NoError(t, err)
+	logTests := []log.Logger{
+		nil,
+		log.NewZapLoggerWithLevel(log.DebugLevel),
+	}
+	for _, test := range logTests {
+		cn.SetLogger(test)
+		err := cn.Open()
+		assert.NoError(ts.T(), err)
+		err = cn.Close()
+		assert.NoError(ts.T(), err)
+	}
 }
 
-func TestChestnut_WithLogger(t *testing.T) {
+func (ts *ChestnutTestSuite) TestChestnut_WithLogger() {
 	levels := []log.Level{
 		log.DebugLevel,
 		log.InfoLevel,
@@ -591,17 +610,109 @@ func TestChestnut_WithLogger(t *testing.T) {
 		WithStdLogger,
 		WithZapLogger,
 	}
-	path := t.TempDir()
-	store := nuts.NewStore(path)
-	assert.NotNil(t, store)
+	path := ts.T().TempDir()
+	store := ts.storeFunc(ts.T(), path)
+	assert.NotNil(ts.T(), store)
 	for _, level := range levels {
 		for _, logOpt := range logOpts {
 			opt := logOpt(level)
 			cn := NewChestnut(store, encryptorOpt, opt)
 			err := cn.Open()
-			assert.NoError(t, err)
+			assert.NoError(ts.T(), err)
 			err = cn.Close()
-			assert.NoError(t, err)
+			assert.NoError(ts.T(), err)
 		}
 	}
 }
+
+func (ts *ChestnutTestSuite) TestChestnut_BadConfig() {
+	store := ts.storeFunc(ts.T(), ts.T().TempDir())
+	assert.Panics(ts.T(), func() {
+		_ = NewChestnut(nil, encryptorOpt)
+	})
+	assert.Panics(ts.T(), func() {
+		_ = NewChestnut(store)
+	})
+	assert.Panics(ts.T(), func() {
+		_ = NewChestnut(store, encryptorOpt, WithCompression("X"))
+	})
+	assert.Panics(ts.T(), func() {
+		_ = NewChestnut(store, encryptorOpt, WithCompressors(nil, nil))
+	})
+	assert.Panics(ts.T(), func() {
+		_ = NewChestnut(store, encryptorOpt, WithCompressors(compress.PassthroughCompressor, nil))
+	})
+	assert.Panics(ts.T(), func() {
+		_ = NewChestnut(store, encryptorOpt, WithCompressors(nil, compress.PassthroughDecompressor))
+	})
+}
+
+type badEncryptor struct {}
+
+func (b badEncryptor) ID() string {
+	return "a"
+}
+
+func (b badEncryptor) Name() string {
+	return "a"
+}
+
+func (b badEncryptor) Encrypt([]byte) ([]byte, error) {
+	return nil, errors.New("an error")
+}
+
+func (b badEncryptor) Decrypt([]byte) ([]byte,error) {
+	return nil, errors.New("an error")
+}
+
+var _ crypto.Encryptor = (*badEncryptor)(nil)
+
+func (ts *ChestnutTestSuite) TestChestnut_BadEncryptor() {
+	var testGood = []byte("test-good")
+	var testBad = []byte("test-bad")
+	badCompress := func(data []byte) (compressed []byte, err error) {
+		return nil, errors.New("error")
+	}
+	store := ts.storeFunc(ts.T(), ts.T().TempDir())
+	assert.Panics(ts.T(), func() {
+		_ = NewChestnut(store, WithEncryptor(nil))
+	})
+	cn := NewChestnut(store, encryptorOpt)
+	err := cn.Open()
+	assert.NoError(ts.T(), err)
+	err = cn.Put(testName, testGood, testGood)
+	assert.NoError(ts.T(), err)
+	err = cn.Close()
+	assert.NoError(ts.T(), err)
+
+	cn = NewChestnut(store, WithEncryptor(&badEncryptor{}))
+	err = cn.Open()
+	assert.NoError(ts.T(), err)
+	err = cn.Put(testName, testBad, testBad)
+	assert.Error(ts.T(), err)
+	_, err = cn.Get(testName, testGood)
+	assert.Error(ts.T(), err)
+	err = cn.Close()
+	assert.NoError(ts.T(), err)
+
+	compOpt := WithCompressors(compress.PassthroughCompressor, compress.PassthroughDecompressor)
+	cn = NewChestnut(store, encryptorOpt, compOpt)
+	err = cn.Open()
+	assert.NoError(ts.T(), err)
+	err = cn.Put(testName, testGood, testGood)
+	assert.NoError(ts.T(), err)
+	err = cn.Close()
+	assert.NoError(ts.T(), err)
+
+	cn = NewChestnut(store, encryptorOpt, WithCompressors(badCompress, badCompress))
+	err = cn.Open()
+	assert.NoError(ts.T(), err)
+	err = cn.Put(testName, testBad, testBad)
+	assert.Error(ts.T(), err)
+	assert.Error(ts.T(), err)
+	_, err = cn.Get(testName, testGood)
+	assert.Error(ts.T(), err)
+	err = cn.Close()
+	assert.NoError(ts.T(), err)
+}
+

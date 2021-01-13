@@ -77,3 +77,26 @@ func TestLookupDecoder_Decode(t *testing.T) {
 		assert.NotEqual(t, jsoniter.InvalidValue, any.ValueType())
 	}
 }
+
+func TestLookupEncoder_NewLookupDecoder(t *testing.T) {
+	encoder := encoders.NewEncoder()
+	str := "a-string"
+	typ := reflect2.TypeOf(&str)
+	enc := encoder.DecoderOf(typ)
+	bad1 := &Context{}
+	bad2 := &Context{InvalidToken, newTestStream(t)}
+	bad3 := &Context{"a-string-value",nil}
+	good :=  &Context{"a-string-value", newTestStream(t)}
+	for _, ctx := range []*Context {nil, bad1, bad2, bad3, good} {
+		for _, tp := range []reflect2.Type{nil, typ} {
+			for _, ve := range []jsoniter.ValDecoder{nil, enc} {
+				if ctx == good && tp == typ && ve == enc {
+					continue
+				}
+				assert.Panics(t, func() {
+					_ = NewLookupDecoder(ctx, tp, ve)
+				}, ctx, tp, enc)
+			}
+		}
+	}
+}

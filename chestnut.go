@@ -31,7 +31,7 @@ func NewChestnut(store storage.Storage, opt ...ChestOption) *Chestnut {
 	logger := log.Named(opts.log, logName)
 	cn := &Chestnut{opts, store, logger}
 	if err := cn.validConfig(); err != nil {
-		logger.Fatal(err)
+		logger.Panic(err)
 		return nil
 	}
 	return cn
@@ -52,6 +52,9 @@ func (cn *Chestnut) validConfig() error {
 	}
 	if cn.opts.compression == compress.Custom && cn.opts.decompressor == nil {
 		return errors.New("decompressor is required")
+	}
+	if !cn.opts.compression.Valid() {
+		return errors.New("invalid compression format")
 	}
 	return nil
 }
