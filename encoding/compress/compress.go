@@ -21,6 +21,7 @@ const (
 	Zstd Format = "zstd"
 )
 
+// Valid returns true if the Format is valid.
 func (f Format) Valid() bool {
 	switch f {
 	case None:
@@ -34,8 +35,6 @@ func (f Format) Valid() bool {
 	}
 	return true
 }
-
-
 
 // CompressorFunc is the function the prototype for compression.
 type CompressorFunc func(data []byte) (compressed []byte, err error)

@@ -221,16 +221,16 @@ func TestChestnut(t *testing.T) {
 
 func (ts *ChestnutTestSuite) SetupTest() {
 	store := ts.storeFunc(ts.T(), ts.T().TempDir())
-	assert.NotNil(ts.T(), store)
+	ts.NotNil(store)
 	ts.cn = NewChestnut(store, encryptorOpt)
-	assert.NotNil(ts.T(), ts.cn)
+	ts.NotNil(ts.cn)
 	err := ts.cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 func (ts *ChestnutTestSuite) TearDownTest() {
 	err := ts.cn.Close()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 func (ts *ChestnutTestSuite) BeforeTest(_, testName string) {
@@ -263,7 +263,7 @@ func (ts *ChestnutTestSuite) TestChestnut_Get() {
 	for i, test := range tests {
 		value, err := ts.cn.Get(testName, []byte(test.key))
 		test.err(ts.T(), err, "%d test key: %s", i, test.key)
-		assert.Equal(ts.T(), test.value, string(value),
+		ts.Equal(test.value, string(value),
 			"%d test key: %s", i, test.key)
 	}
 }
@@ -284,7 +284,7 @@ func (ts *ChestnutTestSuite) TestChestnut_Load() {
 		ptr := reflect.New(typ).Interface()
 		err := ts.cn.Load(testName, []byte(test.key), ptr)
 		test.err(ts.T(), err, "%d test key: %s", i, test.key)
-		assert.Equal(ts.T(), test.out, ptr)
+		ts.Equal(test.out, ptr)
 	}
 }
 
@@ -297,7 +297,7 @@ func (ts *ChestnutTestSuite) TestChestnut_Sparse() {
 		ptr := reflect.New(typ).Interface()
 		err := ts.cn.Sparse(testName, []byte(test.key), ptr)
 		test.err(ts.T(), err, "%d test key: %s", i, test.key)
-		assert.Equal(ts.T(), test.spr, ptr)
+		ts.Equal(test.spr, ptr)
 	}
 }
 
@@ -333,7 +333,7 @@ func (ts *ChestnutTestSuite) TestChestnut_LoadKeyed() {
 		err := ts.cn.LoadKeyed(test.in)
 		test.err(ts.T(), err, "%d test", i)
 		if err == nil {
-			assert.Equal(ts.T(), test.out, test.in)
+			ts.Equal(test.out, test.in)
 		}
 	}
 }
@@ -357,7 +357,7 @@ func (ts *ChestnutTestSuite) TestChestnut_SparseKeyed() {
 		err := ts.cn.SparseKeyed(test.in)
 		test.err(ts.T(), err, "%d test", i)
 		if err == nil {
-			assert.Equal(ts.T(), test.out, test.in)
+			ts.Equal(test.out, test.in)
 		}
 	}
 }
@@ -375,11 +375,11 @@ func (ts *ChestnutTestSuite) TestChestnut_List() {
 	for i := 0; i < listLen; i++ {
 		list[i] = uuid.New().String()
 		err := ts.cn.Put(testName, []byte(list[i]), []byte(testValue))
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}
 	keys, err := ts.cn.List(testName)
-	assert.NoError(ts.T(), err)
-	assert.Len(ts.T(), keys, listLen)
+	ts.NoError(err)
+	ts.Len(keys, listLen)
 	// put both lists in the same order so we can compare them
 	strKeys := make([]string, len(keys))
 	for i, k := range keys {
@@ -387,7 +387,7 @@ func (ts *ChestnutTestSuite) TestChestnut_List() {
 	}
 	sort.Strings(list)
 	sort.Strings(strKeys)
-	assert.Equal(ts.T(), list, strKeys)
+	ts.Equal(list, strKeys)
 }
 
 func (ts *ChestnutTestSuite) TestChestnut_Delete() {
@@ -411,7 +411,7 @@ func (ts *ChestnutTestSuite) TestChestnut_Delete() {
 
 func (ts *ChestnutTestSuite) TestStore_Export() {
 	err := ts.cn.Export(ts.T().TempDir())
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 func (ts *ChestnutTestSuite) TestStore_SecureEntry() {
@@ -428,21 +428,21 @@ func (ts *ChestnutTestSuite) TestStore_SecureEntry() {
 	}
 	for _, e := range entries {
 		err := ts.cn.Save(testName, e.Key(), e)
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}
 	for _, e := range entries {
 		spr := &value.Secure{}
 		err := ts.cn.Sparse(testName, e.Key(), &spr)
-		assert.NoError(ts.T(), err)
-		assert.Empty(ts.T(), spr.Data)
-		assert.Equal(ts.T(), testValue, spr.GetMetadata(testKey))
+		ts.NoError(err)
+		ts.Empty(spr.Data)
+		ts.Equal(testValue, spr.GetMetadata(testKey))
 	}
 	for _, e := range entries {
 		spr := &value.Secure{}
 		err := ts.cn.Load(testName, e.Key(), &spr)
-		assert.NoError(ts.T(), err)
-		assert.Equal(ts.T(), testData, string(spr.Data))
-		assert.Equal(ts.T(), testValue, spr.GetMetadata(testKey))
+		ts.NoError(err)
+		ts.Equal(testData, string(spr.Data))
+		ts.Equal(testValue, spr.GetMetadata(testKey))
 	}
 }
 
@@ -458,7 +458,7 @@ func (ts *ChestnutTestSuite) testOptionDisableOverwrites(enabled bool) {
 	key := newKey()
 	path := filepath.Join(ts.T().TempDir())
 	store := ts.storeFunc(ts.T(), path)
-	assert.NotNil(ts.T(), store)
+	ts.NotNil(store)
 	opts := []ChestOption{
 		encryptorOpt,
 	}
@@ -468,16 +468,16 @@ func (ts *ChestnutTestSuite) testOptionDisableOverwrites(enabled bool) {
 		opts = append(opts, OverwritesForbidden())
 	}
 	cn := NewChestnut(store, opts...)
-	assert.NotNil(ts.T(), cn)
-	assert.Equal(ts.T(), enabled, cn.opts.overwrites)
+	ts.NotNil(cn)
+	ts.Equal(enabled, cn.opts.overwrites)
 	defer func() {
 		err := cn.Close()
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}()
 	err := cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Put(testName, []byte(key), []byte(testValue))
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	// this should fail with an error if overwrites are disabled
 	err = cn.Put(testName, []byte(key), []byte(testValue))
 	assertErr(ts.T(), err)
@@ -500,34 +500,34 @@ func (ts *ChestnutTestSuite) TestChestnut_ChainedEncryptor() {
 	)
 	path := ts.T().TempDir()
 	store := ts.storeFunc(ts.T(), path)
-	assert.NotNil(ts.T(), store)
+	ts.NotNil(store)
 	cn := NewChestnut(store, encryptorChainOpt)
-	assert.NotNil(ts.T(), cn)
+	ts.NotNil(cn)
 	defer func() {
 		err := cn.Close()
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}()
 	err := cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	key := newKey()
 	err = cn.Put(testName, []byte(key), []byte(testValue))
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	operation = "decrypting"
 	v, err := cn.Get(testName, []byte(key))
-	assert.NotEmpty(ts.T(), v)
-	assert.NoError(ts.T(), err)
-	assert.Equal(ts.T(), []byte(testValue), v)
+	ts.NotEmpty(v)
+	ts.NoError(err)
+	ts.Equal([]byte(testValue), v)
 	err = cn.Delete(testName, []byte(key))
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	e := value.NewSecureValue(uuid.New().String(), []byte(testValue))
 	err = cn.Save(testName, []byte(key), e)
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	se1 := &value.Secure{}
 	err = cn.Sparse(testName, []byte(key), se1)
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	se2 := &value.Secure{}
 	err = cn.Load(testName, []byte(key), se2)
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 func (ts *ChestnutTestSuite) TestChestnut_Compression() {
@@ -535,20 +535,20 @@ func (ts *ChestnutTestSuite) TestChestnut_Compression() {
 	key := newKey()
 	path := filepath.Join(ts.T().TempDir())
 	store := ts.storeFunc(ts.T(), path)
-	assert.NotNil(ts.T(), store)
+	ts.NotNil(store)
 	cn := NewChestnut(store, encryptorOpt, compOpt)
-	assert.NotNil(ts.T(), cn)
+	ts.NotNil(cn)
 	defer func() {
 		err := cn.Close()
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}()
 	err := cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Put(testName, []byte(key), []byte(lorumIpsum))
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	val, err := cn.Get(testName, []byte(key))
-	assert.NoError(ts.T(), err)
-	assert.Equal(ts.T(), lorumIpsum, string(val))
+	ts.NoError(err)
+	ts.Equal(lorumIpsum, string(val))
 }
 
 func (ts *ChestnutTestSuite) TestChestnut_Compressors() {
@@ -556,32 +556,32 @@ func (ts *ChestnutTestSuite) TestChestnut_Compressors() {
 	key := newKey()
 	path := filepath.Join(ts.T().TempDir())
 	store := ts.storeFunc(ts.T(), path)
-	assert.NotNil(ts.T(), store)
+	ts.NotNil(store)
 	cn := NewChestnut(store, encryptorOpt, compOpt)
-	assert.NotNil(ts.T(), cn)
+	ts.NotNil(cn)
 	defer func() {
 		err := cn.Close()
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}()
 	err := cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Put(testName, []byte(key), []byte(lorumIpsum))
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	val, err := cn.Get(testName, []byte(key))
-	assert.NoError(ts.T(), err)
-	assert.Equal(ts.T(), lorumIpsum, string(val))
+	ts.NoError(err)
+	ts.Equal(lorumIpsum, string(val))
 }
 
 func (ts *ChestnutTestSuite) TestChestnut_OpenErr() {
 	cn := &Chestnut{}
 	err := cn.Open()
-	assert.Error(ts.T(), err)
+	ts.Error(err)
 }
 
 func (ts *ChestnutTestSuite) TestChestnut_SetLogger() {
 	path := ts.T().TempDir()
 	store := ts.storeFunc(ts.T(), path)
-	assert.NotNil(ts.T(), store)
+	ts.NotNil(store)
 	cn := NewChestnut(store, encryptorOpt)
 	logTests := []log.Logger{
 		nil,
@@ -590,9 +590,9 @@ func (ts *ChestnutTestSuite) TestChestnut_SetLogger() {
 	for _, test := range logTests {
 		cn.SetLogger(test)
 		err := cn.Open()
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 		err = cn.Close()
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}
 }
 
@@ -612,42 +612,42 @@ func (ts *ChestnutTestSuite) TestChestnut_WithLogger() {
 	}
 	path := ts.T().TempDir()
 	store := ts.storeFunc(ts.T(), path)
-	assert.NotNil(ts.T(), store)
+	ts.NotNil(store)
 	for _, level := range levels {
 		for _, logOpt := range logOpts {
 			opt := logOpt(level)
 			cn := NewChestnut(store, encryptorOpt, opt)
 			err := cn.Open()
-			assert.NoError(ts.T(), err)
+			ts.NoError(err)
 			err = cn.Close()
-			assert.NoError(ts.T(), err)
+			ts.NoError(err)
 		}
 	}
 }
 
 func (ts *ChestnutTestSuite) TestChestnut_BadConfig() {
 	store := ts.storeFunc(ts.T(), ts.T().TempDir())
-	assert.Panics(ts.T(), func() {
+	ts.Panics(func() {
 		_ = NewChestnut(nil, encryptorOpt)
 	})
-	assert.Panics(ts.T(), func() {
+	ts.Panics(func() {
 		_ = NewChestnut(store)
 	})
-	assert.Panics(ts.T(), func() {
+	ts.Panics(func() {
 		_ = NewChestnut(store, encryptorOpt, WithCompression("X"))
 	})
-	assert.Panics(ts.T(), func() {
+	ts.Panics(func() {
 		_ = NewChestnut(store, encryptorOpt, WithCompressors(nil, nil))
 	})
-	assert.Panics(ts.T(), func() {
+	ts.Panics(func() {
 		_ = NewChestnut(store, encryptorOpt, WithCompressors(compress.PassthroughCompressor, nil))
 	})
-	assert.Panics(ts.T(), func() {
+	ts.Panics(func() {
 		_ = NewChestnut(store, encryptorOpt, WithCompressors(nil, compress.PassthroughDecompressor))
 	})
 }
 
-type badEncryptor struct {}
+type badEncryptor struct{}
 
 func (b badEncryptor) ID() string {
 	return "a"
@@ -661,7 +661,7 @@ func (b badEncryptor) Encrypt([]byte) ([]byte, error) {
 	return nil, errors.New("an error")
 }
 
-func (b badEncryptor) Decrypt([]byte) ([]byte,error) {
+func (b badEncryptor) Decrypt([]byte) ([]byte, error) {
 	return nil, errors.New("an error")
 }
 
@@ -674,45 +674,44 @@ func (ts *ChestnutTestSuite) TestChestnut_BadEncryptor() {
 		return nil, errors.New("error")
 	}
 	store := ts.storeFunc(ts.T(), ts.T().TempDir())
-	assert.Panics(ts.T(), func() {
+	ts.Panics(func() {
 		_ = NewChestnut(store, WithEncryptor(nil))
 	})
 	cn := NewChestnut(store, encryptorOpt)
 	err := cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Put(testName, testGood, testGood)
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Close()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 
 	cn = NewChestnut(store, WithEncryptor(&badEncryptor{}))
 	err = cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Put(testName, testBad, testBad)
-	assert.Error(ts.T(), err)
+	ts.Error(err)
 	_, err = cn.Get(testName, testGood)
-	assert.Error(ts.T(), err)
+	ts.Error(err)
 	err = cn.Close()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 
 	compOpt := WithCompressors(compress.PassthroughCompressor, compress.PassthroughDecompressor)
 	cn = NewChestnut(store, encryptorOpt, compOpt)
 	err = cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Put(testName, testGood, testGood)
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Close()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 
 	cn = NewChestnut(store, encryptorOpt, WithCompressors(badCompress, badCompress))
 	err = cn.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	err = cn.Put(testName, testBad, testBad)
-	assert.Error(ts.T(), err)
-	assert.Error(ts.T(), err)
+	ts.Error(err)
+	ts.Error(err)
 	_, err = cn.Get(testName, testGood)
-	assert.Error(ts.T(), err)
+	ts.Error(err)
 	err = cn.Close()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
-

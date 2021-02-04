@@ -70,13 +70,13 @@ func (ts *storeTestSuite) SetupTest() {
 	ts.path = ts.T().TempDir()
 	ts.store = ts.storeFunc(ts.path)
 	err := ts.store.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 // TearDownTest
 func (ts *storeTestSuite) TearDownTest() {
 	err := ts.store.Close()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 // BeforeTest
@@ -105,7 +105,7 @@ func (ts *storeTestSuite) TestStorePut() {
 // TestStoreSave
 func (ts *storeTestSuite) TestStoreSave() {
 	err := ts.store.Save(testName, []byte(testKey), testObj)
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 // TestStoreLoad
@@ -115,8 +115,8 @@ func (ts *storeTestSuite) TestStoreLoad() {
 	})
 	to := &testObject{}
 	err := ts.store.Load(testName, []byte(testKey), to)
-	assert.NoError(ts.T(), err)
-	assert.Equal(ts.T(), testObj, to)
+	ts.NoError(err)
+	ts.Equal(testObj, to)
 }
 
 // TestStoreGet
@@ -124,7 +124,7 @@ func (ts *storeTestSuite) TestStoreGet() {
 	for i, test := range tests {
 		value, err := ts.store.Get(test.name, []byte(test.key))
 		test.err(ts.T(), err, "%d test name: %s key: %s", i, test.name, test.key)
-		assert.Equal(ts.T(), test.value, string(value),
+		ts.Equal(test.value, string(value),
 			"%d test key: %s", i, test.key)
 	}
 }
@@ -144,11 +144,11 @@ func (ts *storeTestSuite) TestStoreList() {
 	for i := 0; i < listLen; i++ {
 		list[i] = uuid.New().String()
 		err := ts.store.Put(testName, []byte(list[i]), []byte(testValue))
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}
 	keys, err := ts.store.List(testName)
-	assert.NoError(ts.T(), err)
-	assert.Len(ts.T(), keys, listLen)
+	ts.NoError(err)
+	ts.Len(keys, listLen)
 	// put both lists in the same order so we can compare them
 	strKeys := make([]string, len(keys))
 	for i, k := range keys {
@@ -156,7 +156,7 @@ func (ts *storeTestSuite) TestStoreList() {
 	}
 	sort.Strings(list)
 	sort.Strings(strKeys)
-	assert.Equal(ts.T(), list, strKeys)
+	ts.Equal(list, strKeys)
 }
 
 // TestStoreListAll
@@ -167,20 +167,20 @@ func (ts *storeTestSuite) TestStoreListAll() {
 		list[i] = uuid.New().String()
 		ns := fmt.Sprintf("%s%d", testName, i)
 		err := ts.store.Put(ns, []byte(list[i]), []byte(testValue))
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}
 	keyMap, err := ts.store.ListAll()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	var keys []string
 	for _, ks := range keyMap {
 		for _, k := range ks {
 			keys = append(keys, string(k))
 		}
 	}
-	assert.Len(ts.T(), keys, listLen)
+	ts.Len(keys, listLen)
 	sort.Strings(list)
 	sort.Strings(keys)
-	assert.Equal(ts.T(), list, keys)
+	ts.Equal(list, keys)
 }
 
 // TestStoreDelete
@@ -218,14 +218,14 @@ func (ts *storeTestSuite) TestStoreExport() {
 		test.Err(ts.T(), err)
 		if err == nil {
 			s2 := ts.storeFunc(test.path)
-			assert.NotNil(ts.T(), s2)
+			ts.NotNil(s2)
 			err = s2.Open()
-			assert.NoError(ts.T(), err)
+			ts.NoError(err)
 			keys, err := s2.ListAll()
-			assert.NoError(ts.T(), err)
-			assert.NotEmpty(ts.T(), keys)
+			ts.NoError(err)
+			ts.NotEmpty(keys)
 			err = s2.Close()
-			assert.NoError(ts.T(), err)
+			ts.NoError(err)
 		}
 	}
 }
@@ -250,11 +250,11 @@ func (ts *storeTestSuite) TestStoreWithLogger() {
 		for _, logOpt := range logOpts {
 			opt := logOpt(level)
 			store := ts.storeFunc(path, opt)
-			assert.NotNil(ts.T(), store)
+			ts.NotNil(store)
 			err := store.Open()
-			assert.NoError(ts.T(), err)
+			ts.NoError(err)
 			err = store.Close()
-			assert.NoError(ts.T(), err)
+			ts.NoError(err)
 		}
 	}
 }

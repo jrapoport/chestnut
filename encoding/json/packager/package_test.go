@@ -24,7 +24,7 @@ var (
 	zstd      = []byte("KLUv/QQAAQEAeyJ0ZXN0X29iamVjdCI6eyJjbmMxZmY3NzU1IjowfX1hE1Nm")
 	emptyZstd = []byte("KLUv/QQACQAAII1jaLY=")
 	badVer    = "999.999.999"
-	badVer2    = ".*"
+	badVer2   = ".*"
 	badFormat = Format("invalid")
 	badData   = []byte("==")
 	badZstd   = []byte("bm9wZQ")
@@ -65,8 +65,8 @@ var tests = []TestCase{
 		assert.Error, assert.Error},
 	{ver, Sparse, empty, empty, noComp, nil, nil,
 		assert.Error, assert.Error},
-			{ver, Sparse, id, empty, noComp, nil, nil,
-				assert.Error, assert.Error},
+	{ver, Sparse, id, empty, noComp, nil, nil,
+		assert.Error, assert.Error},
 	// valid packages
 	{ver, Secure, id, empty, noComp, sec, nil,
 		assert.NoError, assert.NoError},
@@ -163,9 +163,9 @@ func (ts *PackageTestSuite) TestPackage_Encode() {
 		bytes, err := EncodePackage(test.id, test.token, test.sec, test.enc, test.comp)
 		test.wrapErr(ts.T(), err)
 		if err == nil {
-			assert.NotEmpty(ts.T(), bytes)
+			ts.NotEmpty(bytes)
 		} else {
-			assert.Empty(ts.T(), bytes)
+			ts.Empty(bytes)
 		}
 	}
 }
@@ -198,11 +198,11 @@ func (ts *PackageTestSuite) TestPackage_Decode() {
 		b := bytes.Buffer{}
 		e := gob.NewEncoder(&b)
 		err := e.Encode(testPkg)
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 		pkg, err := DecodePackage(b.Bytes())
 		test.unwrapErr(ts.T(), err)
 		if err != nil {
-			assert.Nil(ts.T(), pkg)
+			ts.Nil(pkg)
 		} else {
 			assertPackage(ts.T(), test, pkg)
 		}
@@ -214,15 +214,15 @@ func (ts *PackageTestSuite) TestPackage() {
 		bytes, err := EncodePackage(test.id, test.token, test.sec, test.enc, test.comp)
 		test.wrapErr(ts.T(), err, string(bytes))
 		if err != nil {
-			assert.Empty(ts.T(), string(bytes))
+			ts.Empty(string(bytes))
 			continue
 		} else {
-			assert.NotEmpty(ts.T(), string(bytes))
+			ts.NotEmpty(string(bytes))
 		}
 		pkg, err := DecodePackage(bytes)
 		test.unwrapErr(ts.T(), err)
 		if err != nil {
-			assert.Nil(ts.T(), pkg)
+			ts.Nil(pkg)
 		} else {
 			assertPackage(ts.T(), test, pkg)
 		}

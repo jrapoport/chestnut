@@ -68,14 +68,14 @@ func TestKeystore(t *testing.T) {
 func (ts *KeystoreTestSuite) SetupTest() {
 	store := newNutsDBStore(ts.T())
 	ts.keystore = NewKeystore(store, encryptorOpt)
-	assert.NotNil(ts.T(), ts.keystore)
+	ts.NotNil(ts.keystore)
 	err := ts.keystore.Open()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 func (ts *KeystoreTestSuite) TearDownTest() {
 	err := ts.keystore.Close()
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 func (ts *KeystoreTestSuite) BeforeTest(_, testName string) {
@@ -91,11 +91,11 @@ func (ts *KeystoreTestSuite) BeforeTest(_, testName string) {
 
 func (ts *KeystoreTestSuite) TestKeystore_Encryptor() {
 	err := ts.keystore.Put(testName, privateKey)
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 	pk, err := ts.keystore.Get(testName)
-	assert.NotNil(ts.T(), pk)
-	assert.NoError(ts.T(), err)
-	assert.Equal(ts.T(), privateKey.Type().String(), pk.Type().String())
+	ts.NotNil(pk)
+	ts.NoError(err)
+	ts.Equal(privateKey.Type().String(), pk.Type().String())
 }
 
 func (ts *KeystoreTestSuite) TestKeystore_Put() {
@@ -104,7 +104,7 @@ func (ts *KeystoreTestSuite) TestKeystore_Put() {
 		test.err(ts.T(), err, "%d test name: %s", i, test.name)
 	}
 	err := ts.keystore.Put(testName, privateKey)
-	assert.Error(ts.T(), err)
+	ts.Error(err)
 }
 
 func (ts *KeystoreTestSuite) TestKeystore_Get() {
@@ -112,14 +112,14 @@ func (ts *KeystoreTestSuite) TestKeystore_Get() {
 	for i, test := range getTests {
 		key, err := ts.keystore.Get(test.name)
 		test.err(ts.T(), err, "%d test name: %s", i, test.name)
-		assert.Equal(ts.T(), test.key, key, "%d test name: %s", i, test.name)
+		ts.Equal(test.key, key, "%d test name: %s", i, test.name)
 	}
 }
 
 func (ts *KeystoreTestSuite) TestKeystore_Has() {
 	for _, test := range tests {
 		has, _ := ts.keystore.Has(test.name)
-		assert.Equal(ts.T(), test.exists, has)
+		ts.Equal(test.exists, has)
 	}
 }
 
@@ -129,15 +129,15 @@ func (ts *KeystoreTestSuite) TestKeystore_List() {
 	for i := 0; i < listLen; i++ {
 		list[i] = uuid.New().String()
 		err := ts.keystore.Put(list[i], privateKey)
-		assert.NoError(ts.T(), err)
+		ts.NoError(err)
 	}
 	keys, err := ts.keystore.List()
-	assert.NoError(ts.T(), err)
-	assert.Len(ts.T(), keys, listLen)
+	ts.NoError(err)
+	ts.Len(keys, listLen)
 	// put both lists in the same order so we can compare them
 	sort.Strings(list)
 	sort.Strings(keys)
-	assert.Equal(ts.T(), list, keys)
+	ts.Equal(list, keys)
 }
 
 func (ts *KeystoreTestSuite) TestKeystore_Delete() {
@@ -152,7 +152,7 @@ func (ts *KeystoreTestSuite) TestKeystore_Delete() {
 
 func (ts *KeystoreTestSuite) TestKeystore_Export() {
 	err := ts.keystore.Export(ts.T().TempDir())
-	assert.NoError(ts.T(), err)
+	ts.NoError(err)
 }
 
 func TestKeystore_OpenErr(t *testing.T) {

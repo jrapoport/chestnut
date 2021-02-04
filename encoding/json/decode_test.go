@@ -40,4 +40,3 @@ func TestSecureUnmarshal_Error(t *testing.T) {
 	err = SecureUnmarshal(familyEnc, &p, decrypt)
 	assert.Error(t, err)
 }
-

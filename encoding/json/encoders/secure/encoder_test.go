@@ -68,7 +68,7 @@ func TestSecureEncoderExtension(t *testing.T) {
 	}
 	e := NewSecureEncoderExtension(encoders.InvalidID, PassthroughEncryption)
 	assert.NotNil(t, e)
-	assert.NotEmpty(t, e.encoderID )
+	assert.NotEmpty(t, e.encoderID)
 	assert.Panics(t, func() {
 		_ = NewSecureEncoderExtension(encoders.InvalidID, nil)
 	})
@@ -77,7 +77,7 @@ func TestSecureEncoderExtension(t *testing.T) {
 func TestSecureEncoderExtension_BadSeal(t *testing.T) {
 	var i int
 	badCompressor := func(data []byte) (compressed []byte, err error) {
-		if i % 2 != 0 && i < 10 {
+		if i%2 != 0 && i < 10 {
 			i++
 			return nil, errors.New("compression error")
 		}
@@ -87,7 +87,7 @@ func TestSecureEncoderExtension_BadSeal(t *testing.T) {
 	bade := true
 	ext := NewSecureEncoderExtension(testEncoderID, func(plaintext []byte) (ciphertext []byte, err error) {
 		if bade {
-			return nil,  errors.New("encryption error")
+			return nil, errors.New("encryption error")
 		}
 		return nil, err
 	},
@@ -134,7 +134,7 @@ func TestSecureEncoderExtension_BadOpen(t *testing.T) {
 	err = ext.Open()
 	assert.Error(t, err)
 	ext.Close()
-    ctx := ext.lookupCtx
+	ctx := ext.lookupCtx
 	ext.lookupCtx = nil
 	err = ext.Open()
 	assert.Error(t, err)
@@ -147,4 +147,3 @@ func TestSecureEncoderExtension_BadOpen(t *testing.T) {
 	err = ext.Open()
 	assert.Error(t, err)
 }
-

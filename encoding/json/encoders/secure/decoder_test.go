@@ -86,7 +86,7 @@ func TestSecureDecoderExtension(t *testing.T) {
 	}
 	d := NewSecureDecoderExtension(encoders.InvalidID, PassthroughDecryption)
 	assert.NotNil(t, d)
-	assert.Empty(t, d.encoderID )
+	assert.Empty(t, d.encoderID)
 	assert.Panics(t, func() {
 		_ = NewSecureDecoderExtension(encoders.InvalidID, nil)
 	})
@@ -95,7 +95,7 @@ func TestSecureDecoderExtension(t *testing.T) {
 func TestSecureDecoderExtension_BadUnseal(t *testing.T) {
 	var i int
 	badCompressor := func(data []byte) (compressed []byte, err error) {
-		if i % 2 != 0 && i < 10 {
+		if i%2 != 0 && i < 10 {
 			i++
 			return nil, errors.New("compression error")
 		}
@@ -105,7 +105,7 @@ func TestSecureDecoderExtension_BadUnseal(t *testing.T) {
 	bade := true
 	ext := NewSecureDecoderExtension(testEncoderID, func(plaintext []byte) (ciphertext []byte, err error) {
 		if bade {
-			return nil,  errors.New("encryption error")
+			return nil, errors.New("encryption error")
 		}
 		return nil, err
 	},

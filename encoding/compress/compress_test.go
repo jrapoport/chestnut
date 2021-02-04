@@ -78,7 +78,7 @@ func TestPassthrough(t *testing.T) {
 	c, err := PassthroughCompressor(testString)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, c)
-	d, err :=  PassthroughDecompressor(c)
+	d, err := PassthroughDecompressor(c)
 	assert.NoError(t, err)
 	assert.Equal(t, testString, d)
 }

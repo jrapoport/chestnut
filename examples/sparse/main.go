@@ -32,14 +32,14 @@ func main() {
 	}
 
 	// define a sparse struct with a secure field
-	type SparseKeyed struct {
+	type Sparse struct {
 		// SecretString with the 'secure' tag option
 		SecretString string `json:",secure"`
 		// PublicString will not be encrypted
 		PublicString string
 	}
 
-	src := &SparseKeyed{
+	src := &Sparse{
 		SecretString: "I am secret",
 		PublicString: "I am visible",
 	}
@@ -53,7 +53,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	sparse := &SparseKeyed{}
+	sparse := &Sparse{}
 
 	// load a sparse copy
 	err := cn.Sparse(namespace, key, sparse)

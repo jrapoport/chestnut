@@ -697,7 +697,7 @@ type MySecureStruct struct {
     ValueA     int      `json:",secure"`           // *will* be encrypted
     ValueB     struct{} `json:"value_b,secure"`    // *will* be encrypted
     ValueC     string   `json:",omitempty,secure"` // *will* be encrypted
-    PlaintextA string                                // will *not* be encrypted
+    PlaintextA string                              // will *not* be encrypted
     PlaintextB int      `json:""`                  // will *not* be encrypted
     PlaintextC int      `json:"-"`                 // will *not* be encrypted
     privateA   int      `json:",secure"`           // will *not* be encrypted
@@ -711,24 +711,24 @@ Fields marked with `secure` are encrypted hierarchically, meaning if you have:
 package main
 
 type MyStructA struct {
-	ValueA string `json:"value_a,secure"` // this field *will* be encrypted
+	ValueA string `json:"value_a,secure"`    // *will* be encrypted
 }
 
 type MyStructB struct {
-	MyStructA        // this field *will* not be encrypted
-	ValueB    string `json:"value_b"` // this field *will* not be encrypted
+	MyStructA                                // will *not* be encrypted
+	ValueB    string `json:"value_b"`        // will *not* be encrypted
 }
 
 type MyStructC struct {
-	MyStructA        // this field *will* not be encrypted
-	ValueC    string `json:"value_c"` // this field *will* not be encrypted
+	MyStructA                                // will *not* be encrypted
+	ValueC    string `json:"value_c"`        // will *not* be encrypted
 }
 
 type MyStructD struct {
-	ValueD string    `json:"value_d,secure"` // this field *will* be encrypted
-	Embed1 MyStructA // this field *will* not be encrypted
-	Embed2 MyStructB // this field *will* not be encrypted
-	Embed3 MyStructB `json:"embed_3,secure"` // this field *will* be encrypted
+	ValueD string    `json:"value_d,secure"` // *will* be encrypted
+	Embed1 MyStructA                         // will *not* be encrypted
+	Embed2 MyStructB                         // will *not* be encrypted
+	Embed3 MyStructB `json:"embed_3,secure"` // *will* be encrypted
 }
 
 var myStruct = &MyStructD{
