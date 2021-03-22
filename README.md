@@ -174,11 +174,14 @@ cn := chestnut.NewChestnut(store, ...)
 
 ### Planned
 
-[GORM](https://github.com/go-gorm/gorm)  
-  Gorm is an ORM, and while not a datastore per se, we think it could be adapted 
-  to support sparse encryption. The upside of Gorm is automatic support for 
-  databases like mysql, sqlite, etc. The downside is supporting Gorm is likely a 
-  lot of work, so no timeframe.
+Other K/V stores like LevelDB.
+
+[GORM](https://github.com/go-gorm/gorm) (probably not)
+  Gorm is an ORM, so while it's not a datastore per se, it could be adapted 
+  to support sparse encryption and would mean automatic support for databases 
+  like mysql, sqlite, etc. However, most (if not all) of those DBs *already* 
+  support built-in encryption, so w/o some compelling use-case that's not 
+  already covered I don't see a lot of value-add.
 
 ## Encryption
 Chestnut supports several flavors of AES out of the box:
