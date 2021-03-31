@@ -94,6 +94,12 @@ func (ts *storeTestSuite) BeforeTest(_, testName string) {
 	}
 }
 
+func (ts *storeTestSuite) TestInvalidPath() {
+	ts.Panics(func() {
+		ts.storeFunc("")
+	})
+}
+
 // TestStorePut
 func (ts *storeTestSuite) TestStorePut() {
 	for i, test := range putTests {

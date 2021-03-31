@@ -35,7 +35,7 @@ func NewKeystore(store storage.Storage, opt ...chestnut.ChestOption) *Keystore {
 	logger := log.Named(cn.Logger(), logName)
 	ks := &Keystore{cn, store, logger}
 	if err := ks.validConfig(); err != nil {
-		logger.Fatal(err)
+		logger.Panic(err)
 		return nil
 	}
 	return ks

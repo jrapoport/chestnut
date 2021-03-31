@@ -29,7 +29,7 @@ func NewStore(path string, opt ...storage.StoreOption) storage.Storage {
 	opts := storage.ApplyOptions(storage.DefaultStoreOptions, opt...)
 	logger := log.Named(opts.Logger(), logName)
 	if path == "" {
-		logger.Fatal("store path required")
+		logger.Panic("store path required")
 	}
 	return &nutsDBStore{path: path, opts: opts, log: logger}
 }

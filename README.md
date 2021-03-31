@@ -1,6 +1,10 @@
 # 🌰 &nbsp;Chestnut
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jrapoport/chestnut/test?style=flat-square) [![Go Report Card](https://goreportcard.com/badge/github.com/jrapoport/chestnut?style=flat-square&)](https://goreportcard.com/report/github.com/jrapoport/chestnut) ![Codecov branch](https://img.shields.io/codecov/c/github/jrapoport/chestnut/master?style=flat-square&token=7REY4BDPHW) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/jrapoport/chestnut?style=flat-square) [![GitHub](https://img.shields.io/github/license/jrapoport/chestnut?style=flat-square)](https://github.com/jrapoport/chestnut/blob/master/LICENSE)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jrapoport/chestnut/test?style=flat-square) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/jrapoport/chestnut?style=flat-square&)](https://goreportcard.com/report/github.com/jrapoport/chestnut) 
+[![Codecov branch](https://img.shields.io/codecov/c/github/jrapoport/chestnut/master?style=flat-square&token=7REY4BDPHW)](https://codecov.io/gh/jrapoport/chestnut)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/jrapoport/chestnut?style=flat-square) 
+[![GitHub](https://img.shields.io/github/license/jrapoport/chestnut?style=flat-square)](https://github.com/jrapoport/chestnut/blob/master/LICENSE)
 
 [![Buy Me A Coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-☕-6F4E37?style=flat-square)](https://www.buymeacoffee.com/jrapoport)
 

@@ -15,6 +15,7 @@ import (
 const (
 	logName   = "bolt"
 	storeName = "chest.db"
+	storeExt  = ".db"
 )
 
 // boltStore is an implementation the Storage interface for bbolt
@@ -33,7 +34,7 @@ func NewStore(path string, opt ...storage.StoreOption) storage.Storage {
 	opts := storage.ApplyOptions(storage.DefaultStoreOptions, opt...)
 	logger := log.Named(opts.Logger(), logName)
 	if path == "" {
-		logger.Fatal("store path required")
+		logger.Panic("store path required")
 	}
 	return &boltStore{path: path, opts: opts, log: logger}
 }
@@ -297,26 +298,38 @@ func ensureDBPath(path string) (string, error) {
 		return "", errors.New("path not found")
 	}
 	// does the path exist?
-	_, err := os.Stat(path)
+	info, err := os.Stat(path)
 	exists := !os.IsNotExist(err)
+	// this is some kind of actual error
 	if err != nil && exists {
 		return "", err
 	}
-	if !exists {
-		// make sure the directory path exists
-		if err = os.MkdirAll(path, 0700); err != nil {
-			return "", err
-		}
+	if exists && info.Mode().IsDir() {
+		// if we have a directory, then append our default name
+		path = filepath.Join(path, storeName)
 	}
-	// is the path a directory?
-	d, err := os.Stat(path)
+	ext := filepath.Ext(path)
+	if ext == "" {
+		path += storeExt
+	}
+	dir, _ := filepath.Split(path)
+	// make sure the directory path exists
+	if err = os.MkdirAll(dir, 0700); err != nil {
+		return "", err
+	}
+	_, err = os.Stat(path)
+	exists = !os.IsNotExist(err)
+	// this is some kind of actual error
+	if err != nil && exists {
+		return "", err
+	}
+	if exists {
+		return path, nil
+	}
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return "", err
 	}
-	if !d.Mode().IsDir() {
-		return path, nil
-	}
-	// if we have a directory, then append our default name
-	path = filepath.Join(path, storeName)
+	defer f.Close()
 	return path, nil
 }

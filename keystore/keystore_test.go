@@ -89,6 +89,12 @@ func (ts *KeystoreTestSuite) BeforeTest(_, testName string) {
 	}
 }
 
+func TestInvalidConfig(t *testing.T) {
+	assert.Panics(t, func() {
+		NewKeystore(nil, encryptorOpt)
+	})
+}
+
 func (ts *KeystoreTestSuite) TestKeystore_Encryptor() {
 	err := ts.keystore.Put(testName, privateKey)
 	ts.NoError(err)
