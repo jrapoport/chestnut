@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/google/uuid v1.2.0
-	github.com/hashicorp/go-version v1.2.1
+	github.com/hashicorp/go-version v1.3.0
 	github.com/ipfs/go-ipfs v0.8.0
 	github.com/json-iterator/go v1.1.10
 	github.com/klauspost/compress v1.11.13
