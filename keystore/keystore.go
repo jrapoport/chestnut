@@ -113,5 +113,5 @@ func (ks *Keystore) Export(path string) error {
 
 // Close the Keystore
 func (ks *Keystore) Close() error {
-	return ks.cn.Open()
+	return ks.cn.Close()
 }
