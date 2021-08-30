@@ -3,7 +3,7 @@ package keystore
 import (
 	"errors"
 
-	"github.com/ipfs/go-ipfs/keystore"
+	"github.com/ipfs/go-ipfs-keystore"
 	"github.com/jrapoport/chestnut"
 	"github.com/jrapoport/chestnut/log"
 	"github.com/jrapoport/chestnut/storage"

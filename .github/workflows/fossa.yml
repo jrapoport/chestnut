@@ -10,17 +10,12 @@ defaults:
     shell: bash
 
 jobs:
-  fossa:
+  fossa-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Dependencies
         uses: actions/checkout@v2
-      - name: Fossa init
-        run: |-
-          curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
-          fossa init --project github.com/${GITHUB_REPOSITORY}
-          cat .fossa.yml
-      - name: Upload dependencies
-        run: fossa analyze --verbose go:.
-        env:
-          FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
+      - name: Fossa
+        uses: fossas/fossa-action@v1
+        with:
+          api-key: ${{secrets.FOSSA_API_KEY}}
