@@ -1,6 +1,6 @@
 # 🌰 &nbsp;Chestnut
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jrapoport/chestnut/test?style=flat-square) 
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jrapoport/chestnut/test.yml?branch=master&style=flat-square) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/jrapoport/chestnut?style=flat-square&)](https://goreportcard.com/report/github.com/jrapoport/chestnut) 
 [![Codecov branch](https://img.shields.io/codecov/c/github/jrapoport/chestnut/master?style=flat-square&token=7REY4BDPHW)](https://codecov.io/gh/jrapoport/chestnut)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/jrapoport/chestnut?style=flat-square) 
