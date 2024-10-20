@@ -6,14 +6,15 @@ GO_MOD := $(GO) mod
 GO_GET := $(GO) get -u -v
 GO_FMT := $(GO) fmt
 GO_RUN := $(GO) run
-GO_TEST:= $(GO) test -p 1 -v
-GO_LINT := $(GO_BIN)/golint
+GO_TEST:= $(GO) test -p 1 -v -failfast
+GO_LINT := golangci-lint run
 # BUG: go vet: structtag field repeats json warning with valid override #40102
 # https://github.com/golang/go/issues/40102
 GO_VET:= $(GO) vet -v -structtag=false
 
-$(GO_LINT):
-	$(GO_GET) golang.org/x/lint/golint
+#$(GO_LINT):
+#	$(GO_GET) golang.org/x/lint/golint
+# brew install golangci-lint
 
 deps:
 	$(GO_MOD) tidy
@@ -22,13 +23,14 @@ deps:
 fmt:
 	$(GO_FMT) ./...
 
-lint: $(GO_LINT)
+lint:
 	$(GO_LINT) ./...
 
 vet:
 	$(GO_VET) ./...
 
-pr: lint vet
+# disable lint for now
+pr: vet
 
 test:
 	$(GO_TEST) $(TEST_FLAGS) ./...

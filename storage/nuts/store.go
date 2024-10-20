@@ -8,13 +8,13 @@ import (
 	"github.com/jrapoport/chestnut/log"
 	"github.com/jrapoport/chestnut/storage"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/xujiajun/nutsdb"
+	"github.com/nutsdb/nutsdb"
 )
 
 const logName = "nutsdb"
 
 // nutsDBStore is an implementation the Storage interface for nutsdb
-// https://github.com/xujiajun/nutsdb.
+// https://github.com/nutsdb/nutsdb.
 type nutsDBStore struct {
 	opts storage.StoreOptions
 	path string
@@ -66,6 +66,16 @@ func (s *nutsDBStore) Put(name string, key []byte, value []byte) error {
 		err = errors.New("value cannot be empty")
 		return s.logError("put", err)
 	}
+	newBucket := func(tx *nutsdb.Tx) error {
+		e := tx.NewBucket(nutsdb.DataStructureBTree, name)
+		if e != nil && !errors.Is(e, nutsdb.ErrBucketAlreadyExist) {
+			return e
+		}
+		return nil
+	}
+	if err := s.db.Update(newBucket); err != nil {
+		return s.logError("put", err)
+	}
 	putValue := func(tx *nutsdb.Tx) error {
 		s.log.Debugf("put: tx %d bytes to key: %s.%s",
 			len(value), name, string(key))
@@ -81,13 +91,13 @@ func (s *nutsDBStore) Get(name string, key []byte) ([]byte, error) {
 		return nil, s.logError("get", err)
 	}
 	var value []byte
+	var err error
 	getValue := func(tx *nutsdb.Tx) error {
 		s.log.Debugf("get: tx key: %s.%s", name, key)
-		e, err := tx.Get(name, key)
+		value, err = tx.Get(name, key)
 		if err != nil {
 			return err
 		}
-		value = e.Value
 		s.log.Debugf("get: tx key: %s.%s value (%d bytes)",
 			name, string(key), len(value))
 		return nil
@@ -125,13 +135,13 @@ func (s *nutsDBStore) Has(name string, key []byte) (bool, error) {
 	var has bool
 	hasKey := func(tx *nutsdb.Tx) error {
 		s.log.Debugf("has: tx get namespace: %s", name)
-		entries, err := tx.GetAll(name)
+		keys, err := tx.GetKeys(name)
 		if err != nil {
 			return err
 		}
-		s.log.Debugf("has: tx found %d keys in: %s", len(entries), name)
-		for _, entry := range entries {
-			has = bytes.Equal(key, entry.Key)
+		s.log.Debugf("has: tx found %d keys in: %s", len(keys), name)
+		for _, k := range keys {
+			has = bytes.Equal(key, k)
 			if has {
 				s.log.Debugf("has: tx key found: %s.%s", name, string(key))
 				break
@@ -154,7 +164,11 @@ func (s *nutsDBStore) Delete(name string, key []byte) error {
 	}
 	del := func(tx *nutsdb.Tx) error {
 		s.log.Debugf("delete: tx key: %s.%s", name, string(key))
-		return tx.Delete(name, key)
+		err := tx.Delete(name, key)
+		if errors.Is(err, nutsdb.ErrKeyNotFound) {
+			return nil
+		}
+		return err
 	}
 	return s.logError("delete", s.db.Update(del))
 }
@@ -176,16 +190,14 @@ func (s *nutsDBStore) List(name string) (keys [][]byte, err error) {
 func (s *nutsDBStore) listKeys(name string, tx *nutsdb.Tx) ([][]byte, error) {
 	var keys [][]byte
 	s.log.Debugf("list: tx scan namespace: %s", name)
-	entries, err := tx.GetAll(name)
+	keys, err := tx.GetKeys(name)
 	if err != nil {
 		return nil, err
 	}
-	keys = make([][]byte, len(entries))
-	s.log.Debugf("list: tx found %d keys in: %s", len(entries), name)
-	for i, entry := range entries {
-		s.log.Debugf("list: tx found key: %s.%s", name, string(entry.Key))
-		keys[i] = entry.Key
-	}
+	s.log.Debugf("list: tx found %d keys in: %s", len(keys), name)
+	// for _, key := range keys {
+	//	s.log.Debugf("list: tx found key: %s.%s", name, key)
+	// }
 	return keys, nil
 }
 
@@ -195,18 +207,19 @@ func (s *nutsDBStore) ListAll() (map[string][][]byte, error) {
 	var total int
 	allKeys := map[string][][]byte{}
 	listKeys := func(tx *nutsdb.Tx) error {
-		for name := range s.db.BPTreeIdx {
-			keys, err := s.listKeys(name, tx)
+		err := tx.IterateBuckets(nutsdb.DataStructureBTree, "*", func(bucket string) bool {
+			keys, err := s.listKeys(bucket, tx)
 			if err != nil {
-				return err
+				return false
 			}
 			if len(keys) <= 0 {
-				continue
+				return true
 			}
-			allKeys[name] = keys
+			allKeys[bucket] = keys
 			total += len(keys)
-		}
-		return nil
+			return true
+		})
+		return err
 	}
 	if err := s.db.View(listKeys); err != nil {
 		return nil, s.logError("list", err)

@@ -2,12 +2,12 @@ package secure
 
 import (
 	"errors"
-	"github.com/jrapoport/chestnut/log"
 	"reflect"
 	"testing"
 
 	"github.com/jrapoport/chestnut/encoding/json/encoders"
 	"github.com/jrapoport/chestnut/encoding/json/packager"
+	"github.com/jrapoport/chestnut/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +36,7 @@ var encoderTests = []encoderTest{
 func TestSecureEncoderExtension(t *testing.T) {
 	for _, test := range encoderTests {
 		testName := reflect.TypeOf(test.src).Elem().Name()
-		if test.compressed != nil {
+		if test.compressed != noOpt {
 			testName += " compressed"
 		}
 		t.Run(testName, func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestSecureEncoderExtension(t *testing.T) {
 			sealed, err := encoderExt.Seal(encoded)
 			assert.NoError(t, err)
 			assert.Equal(t, test.sealed, sealed)
-			// unwrap the sealed package & ake sure it is valid
+			// unwrap the sealed package & make sure it is valid
 			pkg, err := packager.DecodePackage(sealed)
 			assert.NoError(t, err)
 			assert.NotNil(t, pkg)

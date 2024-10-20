@@ -7,8 +7,8 @@ import (
 	"crypto/rsa"
 	"testing"
 
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/ed25519"
 )
@@ -109,7 +109,7 @@ func TestEd25519PrivateKeyToPrivKey(t *testing.T) {
 }
 
 func TestBTCECPrivateKeyToPrivKey(t *testing.T) {
-	btcecKey, err := btcec.NewPrivateKey(btcec.S256())
+	btcecKey, err := btcec.NewPrivateKey()
 	key := (*crypto.Secp256k1PrivateKey)(btcecKey)
 	assert.NoError(t, err)
 	testPrivateKeyToPrivKey(t, key, func() crypto.PrivKey {

@@ -11,7 +11,7 @@ import (
 	"github.com/jrapoport/chestnut/encryptor/crypto"
 	"github.com/jrapoport/chestnut/storage"
 	"github.com/jrapoport/chestnut/storage/nuts"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
