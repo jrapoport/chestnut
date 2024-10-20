@@ -16,8 +16,8 @@ import (
 	"github.com/json-iterator/go"
 )
 
-// SecureLookupPrefix will format the secure lookup token to "[prefix]-[encoder id]-[index]".
-const SecureLookupPrefix = "cn"
+// LookupPrefix will format the secure lookup token to "[prefix]-[encoder id]-[index]".
+const LookupPrefix = "cn"
 
 // EncryptionFunction defines the prototype for the encryption callback.
 // See WARNING regarding use of PassthroughEncryption.
@@ -33,8 +33,8 @@ var PassthroughEncryption EncryptionFunction = func(plaintext []byte) ([]byte, e
 }
 
 // EncoderExtension is a JSON encoder extension for the encryption and decryption of JSON
-// encoded data. It supports full encryption / decryption of the encoded block in in
-// addition to sparse encryption and hashing of structs on a per field basis via supplementary
+// encoded data. It supports full encryption / decryption of the encoded block in
+// addition to sparse encryption and hashing of structs on a per-field basis via supplementary
 // JSON struct field tag options. For additional information on sparse encryption & hashing, please
 // SEE: https://github.com/jrapoport/chestnut/blob/master/README.md
 //
@@ -64,7 +64,7 @@ func NewSecureEncoderExtension(encoderID string, efn EncryptionFunction, opt ...
 	opts = applyOptions(opts, opt...)
 	encoder := encoders.NewEncoder()
 	logName := fmt.Sprintf("%s [%s]", encoderName, encoderID)
-	token := lookup.NewLookupToken(SecureLookupPrefix, encoderID)
+	token := lookup.NewLookupToken(LookupPrefix, encoderID)
 	ext := new(EncoderExtension)
 	ext.opts = opts
 	ext.log = log.Named(opts.log, logName)

@@ -18,7 +18,7 @@ Chestnut is a storage chest, and not a datastore itself. As such, Chestnut must
 be backed by a storage solution. 
 
 Currently, Chestnut supports [BBolt](https://github.com/etcd-io/bbolt) and
-[NutsDB](https://github.com/xujiajun/nutsdb) as backing storage.
+[NutsDB](https://github.com/nutsdb/nutsdb) as backing storage.
 
 ## Table of Contents
 - [Getting Started](#getting-started)
@@ -136,7 +136,7 @@ supports the`storage.Storage` interface.
 
 Currently, Chestnut has built-in support for
 [BBolt](https://github.com/etcd-io/bbolt) and 
-[NutsDB](https://github.com/xujiajun/nutsdb).
+[NutsDB](https://github.com/nutsdb/nutsdb).
 
 #### BBolt
 
@@ -159,9 +159,9 @@ cn := chestnut.NewChestnut(store, ...)
  
 #### NutsDB
 
-https://github.com/xujiajun/nutsdb  
+https://github.com/nutsdb/nutsdb  
 Chestnut has built-in support for using 
-[NutsDB](https://github.com/xujiajun/nutsdb) as a backing store.  
+[NutsDB](https://github.com/nutsdb/nutsdb) as a backing store.  
 
 To use nutsDB for a backing store you can import Chestnut's `nuts` package
 and call `nuts.NewStore()`:
@@ -933,7 +933,7 @@ package main
 
 import  (
     "github.com/ipfs/go-ipfs/keystore"
-    "github.com/libp2p/go-libp2p-core/crypto"
+    "github.com/libp2p/go-libp2p/core/crypto"
 )
 ```
 

@@ -3,11 +3,11 @@ package keystore
 import (
 	"errors"
 
-	"github.com/ipfs/go-ipfs-keystore"
+	"github.com/ipfs/boxo/keystore"
 	"github.com/jrapoport/chestnut"
 	"github.com/jrapoport/chestnut/log"
 	"github.com/jrapoport/chestnut/storage"
-	ci "github.com/libp2p/go-libp2p-core/crypto"
+	ci "github.com/libp2p/go-libp2p/core/crypto"
 )
 
 const (
@@ -25,7 +25,7 @@ type Keystore struct {
 var _ keystore.Keystore = (*Keystore)(nil)
 
 // NewKeystore is used to create a new chestnut ipfs-compliant keystore.
-// Suggest using using this with AES256-CTR encryption based in part
+// Suggest using this with AES256-CTR encryption based in part
 // on this helpful analysis from Shawn Wang, PostgreSQL Database Core:
 // https://www.highgo.ca/2019/08/08/the-difference-in-five-modes-in-the-aes-encryption-algorithm/
 func NewKeystore(store storage.Storage, opt ...chestnut.ChestOption) *Keystore {

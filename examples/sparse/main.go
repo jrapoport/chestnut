@@ -61,6 +61,19 @@ func main() {
 		log.Panic(err)
 	}
 
+	fmt.Println("-- sparse --")
 	fmt.Println("secure field:", sparse.SecretString)
 	fmt.Println("public field:", sparse.PublicString)
+
+	load := &Sparse{}
+
+	// load a full copy
+	err = cn.Load(namespace, key, load)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	fmt.Println("-- load --")
+	fmt.Println("secure field:", load.SecretString)
+	fmt.Println("public field:", load.PublicString)
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+
 	"github.com/jrapoport/chestnut/encoding/json/encoders"
 )
 

@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/jrapoport/chestnut"
 	"github.com/jrapoport/chestnut/encryptor/aes"
 	"github.com/jrapoport/chestnut/encryptor/crypto"
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	// generate a new *btcec.PrivateKey
-	pk1, err := btcec.NewPrivateKey(btcec.S256())
+	pk1, err := btcec.NewPrivateKey()
 	if err != nil {
 		log.Panic(err)
 	}
