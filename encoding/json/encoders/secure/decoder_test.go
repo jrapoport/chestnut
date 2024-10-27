@@ -28,6 +28,10 @@ var decoderTests = []decoderTest{
 	{jsonSealed, jsonUnsealed, &JSON{}, jsonDecoded, jsonMap, sparseOpt},
 	{jsonComp, jsonUnsealed, &JSON{}, jsonDecoded, jsonMap, noOpt},
 	{jsonComp, jsonUnsealed, &JSON{}, jsonDecoded, jsonMap, sparseOpt},
+	{ctrlSealed, ctrlUnsealed, &Escape{}, ctrlDecoded, ctrlMap, noOpt},
+	{ctrlSealed, ctrlUnsealed, &Escape{}, ctrlSparse, ctrlMapSparse, sparseOpt},
+	{ctrlComp, ctrlUnsealed, &Escape{}, ctrlDecoded, ctrlMap, noOpt},
+	{ctrlComp, ctrlUnsealed, &Escape{}, ctrlSparse, ctrlMapSparse, sparseOpt},
 	{hashSealed, hashUnsealed, &Hash{}, hashDecoded, hashMap, noOpt},
 	{hashSealed, hashUnsealed, &Hash{}, hashDecoded, hashMap, sparseOpt},
 	{hashComp, hashUnsealed, &Hash{}, hashDecoded, hashMap, noOpt},
@@ -49,7 +53,7 @@ var decoderTests = []decoderTest{
 func TestSecureDecoderExtension(t *testing.T) {
 	for _, test := range decoderTests {
 		testName := reflect.TypeOf(test.dst).Elem().Name()
-		if test.sparse != nil {
+		if test.sparse != noOpt {
 			testName += " sparse"
 		}
 		t.Run(testName, func(t *testing.T) {

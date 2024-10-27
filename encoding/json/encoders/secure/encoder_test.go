@@ -23,6 +23,8 @@ var encoderTests = []encoderTest{
 	{noneObj, noneEncoded, noneComp, compOpt},
 	{jsonObj, jsonEncoded, jsonSealed, noOpt},
 	{jsonObj, jsonEncoded, jsonComp, compOpt},
+	{ctrlObj, ctrlEncoded, ctrlSealed, noOpt},
+	{ctrlObj, ctrlEncoded, ctrlComp, compOpt},
 	{hashObj, hashEncoded, hashSealed, noOpt},
 	{hashObj, hashEncoded, hashComp, compOpt},
 	{secObj, secEncoded, secSealed, noOpt},

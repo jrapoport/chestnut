@@ -8,10 +8,10 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.7.0
-	github.com/ipfs/boxo v0.24.0
+	github.com/ipfs/boxo v0.24.2
 	github.com/json-iterator/go v1.1.12
 	github.com/klauspost/compress v1.17.11
-	github.com/libp2p/go-libp2p v0.36.5
+	github.com/libp2p/go-libp2p v0.37.0
 	github.com/modern-go/reflect2 v1.0.2
 	github.com/nutsdb/nutsdb v1.0.4
 	github.com/sirupsen/logrus v1.9.3
@@ -21,6 +21,8 @@ require (
 	golang.org/x/crypto v0.28.0
 )
 
+replace github.com/json-iterator/go => github.com/jrapoport/jsoniter v0.0.0-20241027074812-b8ebffc46abb
+
 require (
 	github.com/antlabs/stl v0.0.2 // indirect
 	github.com/antlabs/timer v0.1.4 // indirect
@@ -28,6 +30,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/gofrs/flock v0.12.1 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

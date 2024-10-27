@@ -54,7 +54,7 @@ func newFuncOption(f func(*Options)) *funcOption {
 	}
 }
 
-// applyOptions accepts a Options struct and applies the Option(s) to it.
+// applyOptions accepts an Options struct and applies the Option(s) to it.
 func applyOptions(opts Options, opt ...Option) Options {
 	if opt != nil {
 		for _, o := range opt {
@@ -64,7 +64,7 @@ func applyOptions(opts Options, opt ...Option) Options {
 	return opts
 }
 
-// SparseDecode returns a Option that set the decoder to return sparsely
+// SparseDecode returns an Option that set the decoder to return sparsely
 // decoded data. If the JSON data was not sparely encoded, this does nothing.
 func SparseDecode() Option {
 	return newFuncOption(func(o *Options) {
@@ -72,21 +72,21 @@ func SparseDecode() Option {
 	})
 }
 
-// WithCompressor returns a Option that compresses data.
+// WithCompressor returns an Option that compresses data.
 func WithCompressor(compressor compress.CompressorFunc) Option {
 	return newFuncOption(func(o *Options) {
 		o.compressor = compressor
 	})
 }
 
-// WithDecompressor returns a Option that decompresses data.
+// WithDecompressor returns an Option that decompresses data.
 func WithDecompressor(decompressor compress.DecompressorFunc) Option {
 	return newFuncOption(func(o *Options) {
 		o.decompressor = decompressor
 	})
 }
 
-// WithCompression returns a Option that compresses & decompresses data with Zstd.
+// WithCompression returns an Option that compresses & decompresses data with Zstd.
 func WithCompression(format compress.Format) Option {
 	return newFuncOption(func(o *Options) {
 		switch format {
@@ -99,7 +99,7 @@ func WithCompression(format compress.Format) Option {
 	})
 }
 
-// WithLogger returns a Option which sets the logger for the extension.
+// WithLogger returns an Option which sets the logger for the extension.
 func WithLogger(l log.Logger) Option {
 	return newFuncOption(func(o *Options) {
 		o.log = l

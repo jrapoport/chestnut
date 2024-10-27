@@ -32,6 +32,8 @@ var tests = []testCase{
 	{noneObj, &None{}, noneDecoded, noneMap, sparseOpt},
 	{jsonObj, &JSON{}, jsonDecoded, jsonMap, noOpt},
 	{jsonObj, &JSON{}, jsonDecoded, jsonMap, sparseOpt},
+	{ctrlObj, &Escape{}, ctrlDecoded, ctrlMap, noOpt},
+	{ctrlObj, &Escape{}, ctrlSparse, ctrlMapSparse, sparseOpt},
 	{hashObj, &Hash{}, hashDecoded, hashMap, noOpt},
 	{hashObj, &Hash{}, hashDecoded, hashMap, sparseOpt},
 	{secObj, &Secure{}, secDecoded, secMap, noOpt},
@@ -47,10 +49,10 @@ func TestSecureExtension(t *testing.T) {
 	for _, compressed := range comps {
 		for _, test := range tests {
 			testName := reflect.TypeOf(test.dst).Elem().Name()
-			if test.sparse != nil {
+			if test.sparse != noOpt {
 				testName += " sparse"
 			}
-			if compressed != nil {
+			if compressed != noOpt {
 				testName += " compressed"
 			}
 			t.Run(testName, func(t *testing.T) {
