@@ -1,6 +1,6 @@
 package secure
 
-type CTRL struct {
+type Escape struct {
 	Default       string
 	Blank         string `json:""`
 	Ignore        string `json:"-"`
@@ -15,7 +15,7 @@ type CTRL struct {
 	SecureOmit    string `json:"omit_secure,omitempty,secure"`
 }
 
-var ctrlObj = &CTRL{
+var ctrlObj = &Escape{
 	Default:       "default-value-\n-\r-\t-\"",
 	Blank:         "blank-value-\n-\r-\t-\"",
 	Ignore:        "ignore-value-\n-\r-\t-\"",
@@ -28,7 +28,7 @@ var ctrlObj = &CTRL{
 	SecureEmpty:   "",
 }
 
-var ctrlDecoded = &CTRL{
+var ctrlDecoded = &Escape{
 	Default:       "default-value-\n-\r-\t-\"",
 	Blank:         "blank-value-\n-\r-\t-\"",
 	Named:         "named-value-\n-\r-\t-\"",
@@ -37,7 +37,7 @@ var ctrlDecoded = &CTRL{
 	SecureNamed:   "named-secure-\n-\r-\t-\"",
 }
 
-var ctrlSparse = &CTRL{
+var ctrlSparse = &Escape{
 	Default: "default-value-\n-\r-\t-\"",
 	Blank:   "blank-value-\n-\r-\t-\"",
 	Named:   "named-value-\n-\r-\t-\"",
