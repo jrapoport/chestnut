@@ -45,6 +45,11 @@ func TestLookupEncoder_Encode(t *testing.T) {
 			`"tst0xtesting%d_22"`,
 			`{"Value":"a-struct-ptr-value"}`,
 		},
+		{
+			&testObject{"a\nstruct\tptr\"value"},
+			`"tst0xtesting%d_22"`,
+			`{"Value":"a\nstruct\tptr\"value"}`,
+		},
 	}
 	encoded := ""
 	lookup := ""

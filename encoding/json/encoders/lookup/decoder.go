@@ -21,7 +21,7 @@ type Decoder struct {
 	log     log.Logger
 }
 
-// NewLookupDecoder returns an decoder that reads a lookup table. It will check the
+// NewLookupDecoder returns a decoder that reads a lookup table. It will check the
 // iterated string values to see if they match our lookup token. If there is a match,
 // it will replace it with a decoded value from the lookup table or an empty value.
 func NewLookupDecoder(ctx *Context, typ reflect2.Type, decoder jsoniter.ValDecoder) jsoniter.ValDecoder {
@@ -76,7 +76,7 @@ func (d *Decoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 		d.decoder.Decode(ptr, iter)
 		return
 	}
-	// get the from type
+	// get the 'from' type
 	fromType := iter.WhatIsNext()
 	// secure tokens will be type string. if this is not
 	// a string, call the default decoder and bail.
@@ -85,23 +85,23 @@ func (d *Decoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 		d.decoder.Decode(ptr, iter)
 		return
 	}
-	// read the string & for mat a key
-	key := Key(iter.ReadString())
+	// read the string & format a key
+	val := iter.ReadRawString()
+	key := Key(val)
 	// check to see if it is one of ours
 	if !key.IsTokenKey(d.token) {
 		// we use an Iterator avoid setting the ptr directly since it might be a string
 		// or an interface or who knows what. this was the codecs handle it for us.
-		subIter := iter.Pool().BorrowIterator([]byte(fmt.Sprintf(`"%s"`, key)))
+		subIter := iter.Pool().BorrowIterator([]byte(`"` + key + `"`))
 		defer iter.Pool().ReturnIterator(subIter)
-		d.log.Debugf("decode string: %s", key)
-		// decode the string
+		d.log.Debugf("decode value: %s", val)
 		d.decoder.Decode(ptr, subIter)
 		return
 	}
 	// we have a valid lookup key. look it up in our table
-	val, err := d.lookupKey(key)
+	ent, err := d.lookupKey(key)
 	// did we find something in the lookup table?
-	if err != nil || val == nil {
+	if err != nil || ent == nil {
 		d.log.Debugf("lookup entry not found: %s", key)
 		// this is expected when sparse decoding a struct.
 		if d.valType.Kind() == reflect.Interface {
@@ -113,7 +113,7 @@ func (d *Decoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 	}
 	// clear the buffer
 	d.stream.Reset(nil)
-	val.WriteTo(d.stream)
+	ent.WriteTo(d.stream)
 	subIter := iter.Pool().BorrowIterator(d.stream.Buffer())
 	defer iter.Pool().ReturnIterator(subIter)
 	// decode the string
